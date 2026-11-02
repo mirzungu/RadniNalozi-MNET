@@ -1,0 +1,1189 @@
+<!doctype html>
+<html lang="sr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#131d25">
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font-size:14px}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Radni nalozi servisera</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: sticky header with company mark, tabbed views (Novi nalog / Arhiva / Podešavanja); form is one column of numbered-free sections, like a paper work order */
+:root{
+  --bg:#edf0f2; --surface:#ffffff; --sunk:#e3e8ec; --ink:#16212a; --muted:#566572; --line:#cfd7de;
+  --accent:#d01a22; --accent-ink:#ffffff; --vis:#ec1f27; --vis-ink:#ffffff;
+  --bar:#131d25; --bar-ink:#ffffff; --bar-muted:#9aaab6;
+  --t-ugr:#1f7a3f; --t-dem:#c2570c; --t-srv:#245ea8; --t-pre:#6b46a3; --t-ost:#5d6a75;
+  --danger:#b3362b; --ok:#1f7a3f;
+  --f-display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
+  --f-body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0e151a; --surface:#16212a; --sunk:#0b1115; --ink:#e4eaee; --muted:#93a2ad; --line:#2a3843;
+  --accent:#ff5a52; --accent-ink:#1a0505; --vis:#ec1f27; --vis-ink:#ffffff;
+  --t-ugr:#4cc27a; --t-dem:#f0954f; --t-srv:#6ea6ef; --t-pre:#ad8ae6; --t-ost:#9aa8b3;
+  --danger:#ef7b6f; --ok:#4cc27a; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e151a; --surface:#16212a; --sunk:#0b1115; --ink:#e4eaee; --muted:#93a2ad; --line:#2a3843;
+  --accent:#ff5a52; --accent-ink:#1a0505; --vis:#ec1f27; --vis-ink:#ffffff;
+  --t-ugr:#4cc27a; --t-dem:#f0954f; --t-srv:#6ea6ef; --t-pre:#ad8ae6; --t-ost:#9aa8b3;
+  --danger:#ef7b6f; --ok:#4cc27a; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bar)}
+.gut{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:860px;margin:0 auto}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bar);color:var(--bar-ink)}
+.hrow{display:flex;align-items:center;gap:12px;padding-block:14px 6px}
+.brand{display:flex;align-items:center;gap:10px;min-width:0;flex:1}
+.logo{height:30px;max-width:min(260px,62vw);object-fit:contain;display:block}
+.logo.up{height:40px;max-width:160px}
+.mono-mark{width:40px;height:40px;border-radius:6px;background:var(--ink);color:var(--bg);display:grid;place-items:center;font-family:var(--f-display);font-weight:700;font-size:18px;flex:none}
+.brand-txt{min-width:0}
+.brand-name{font-family:var(--f-display);font-weight:700;font-size:20px;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brand-sub{font-size:12px;color:var(--bar-muted);letter-spacing:.06em;text-transform:uppercase}
+nav{display:flex;gap:4px;overflow-x:auto}
+nav a{font-family:var(--f-display);font-weight:600;font-size:16px;letter-spacing:.02em;text-decoration:none;color:var(--bar-muted);padding:12px 12px 10px;border-bottom:3px solid transparent;white-space:nowrap}
+nav a[aria-current="page"]{color:var(--bar-ink);border-bottom-color:var(--vis)}
+main{padding-block:20px 60px}
+h1{font-family:var(--f-display);font-weight:700;font-size:28px;line-height:1.1;margin:0 0 4px;text-wrap:balance}
+h2{font-family:var(--f-display);font-weight:700;font-size:19px;letter-spacing:.02em;margin:0;text-transform:uppercase}
+.lead{color:var(--muted);margin:0 0 18px}
+.types{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-bottom:18px}
+.type{appearance:none;border:1px solid var(--line);background:var(--surface);color:var(--ink);text-align:left;padding:12px 12px 12px 16px;border-radius:6px;cursor:pointer;font:inherit;position:relative;overflow:hidden}
+.type::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--c)}
+.type b{display:block;font-family:var(--f-display);font-size:17px;font-weight:700}
+.type span{font-size:13px;color:var(--muted)}
+.type[aria-pressed="true"]{border-color:var(--c);box-shadow:inset 0 0 0 1px var(--c)}
+.sec{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:16px;margin-bottom:12px}
+.sec-h{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:12px;padding-bottom:8px;border-bottom:1px dashed var(--line)}
+.sec-h small{color:var(--muted);font-size:12px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.f{display:flex;flex-direction:column;gap:4px;min-width:0}
+.f.full{grid-column:1/-1}
+label.l,.l{font-size:12px;font-weight:600;color:var(--muted);letter-spacing:.05em;text-transform:uppercase}
+.req::after{content:" *";color:var(--danger)}
+input[type=text],input[type=number],input[type=date],input[type=time],input[type=search],input[type=email],input[type=password],input[type=datetime-local],select,textarea{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:9px 10px;width:100%;min-width:0}
+textarea{min-height:76px;resize:vertical}
+input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.mono{font-family:var(--f-mono);font-size:14px;letter-spacing:.02em}
+.invalid{border-color:var(--danger)!important}
+.checks{display:flex;flex-wrap:wrap;gap:6px}
+.chk{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:5px 12px 5px 8px;cursor:pointer;background:var(--bg);font-size:14px}
+.chk input{accent-color:var(--accent);margin:0}
+.chk:has(input:checked){border-color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,var(--bg))}
+.btn{appearance:none;font:inherit;font-weight:600;border-radius:5px;padding:10px 16px;cursor:pointer;border:1px solid var(--line);background:var(--surface);color:var(--ink);display:inline-flex;align-items:center;gap:6px;text-decoration:none}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.dng{color:var(--danger);border-color:var(--danger);background:transparent}
+.btn.sm{padding:6px 10px;font-size:13px}
+.btn:disabled{opacity:.55;cursor:default}
+.eq{width:100%;border-collapse:collapse;font-size:14px}
+.eq th{text-align:left;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:600;padding:0 6px 6px 0}
+.eq td{padding:0 6px 6px 0;vertical-align:top}
+.eq td:last-child{width:36px;padding-right:0}
+.eq input{padding:7px 8px}
+.xbtn{appearance:none;border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:5px;width:34px;height:36px;cursor:pointer;font-size:18px;line-height:1}
+.scroll{overflow-x:auto}
+.km{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
+.km .f{flex:1 1 130px}
+.km-out{font-family:var(--f-mono);font-size:14px;padding:9px 0;color:var(--muted);white-space:nowrap}
+.photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px}
+.ph{position:relative;aspect-ratio:1;max-width:100%;border-radius:5px;overflow:hidden;background:var(--sunk);border:1px solid var(--line)}
+.ph img{width:100%;height:100%;object-fit:cover;display:block}
+.ph button{position:absolute;top:4px;right:4px;width:26px;height:26px;border-radius:50%;border:0;background:rgba(0,0,0,.6);color:#fff;cursor:pointer}
+.addph{aspect-ratio:1;border:1.5px dashed var(--line);border-radius:5px;display:grid;place-items:center;text-align:center;color:var(--muted);font-size:13px;cursor:pointer;padding:6px}
+.addph input{display:none}
+.sig-box{border:1px solid var(--line);border-radius:5px;background:var(--bg);position:relative}
+.sig-box canvas{display:block;width:100%;height:170px;touch-action:none;cursor:crosshair}
+.sig-line{position:absolute;left:16px;right:16px;bottom:38px;border-bottom:1px solid var(--line);pointer-events:none}
+.sig-hint{position:absolute;left:16px;bottom:14px;font-size:12px;color:var(--muted);pointer-events:none}
+.sig-act{position:absolute;top:8px;right:8px}
+.actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:flex-end;margin-top:16px}
+.msg{font-size:14px;color:var(--danger);flex:1 1 220px}
+.note{font-size:13px;color:var(--muted);background:var(--sunk);border-radius:5px;padding:10px 12px;margin:0}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.toolbar input{flex:1 1 220px}
+.filters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.fchip{appearance:none;font:inherit;font-size:13px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:4px 12px;cursor:pointer}
+.fchip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.list{display:flex;flex-direction:column;gap:6px}
+.row{display:grid;grid-template-columns:auto 1fr auto;gap:4px 14px;align-items:center;background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--c);border-radius:5px;padding:10px 14px;text-decoration:none;color:inherit}
+.row:hover{border-color:var(--c)}
+.row .no{font-family:var(--f-mono);font-size:13px}
+.row .mid{min-width:0}
+.row .mid b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .mid span{font-size:13px;color:var(--muted)}
+.row .dt{font-size:13px;color:var(--muted);text-align:right;font-variant-numeric:tabular-nums}
+.tag{display:inline-block;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--c);border:1px solid var(--c);border-radius:3px;padding:1px 6px;white-space:nowrap}
+.empty{text-align:center;color:var(--muted);padding:40px 12px;border:1.5px dashed var(--line);border-radius:6px}
+.count{font-size:13px;color:var(--muted);margin-bottom:8px}
+.dhead{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-bottom:14px}
+.confirm{display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:color-mix(in srgb,var(--danger) 10%,var(--surface));border:1px solid var(--danger);border-radius:5px;padding:10px 12px;margin-bottom:12px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:6px;font-size:14px;z-index:20;max-width:calc(100% - 32px)}
+.logo-prev{height:64px;max-width:220px;object-fit:contain;background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:6px}
+.stat{font-size:13px;color:var(--muted)}
+
+/* ===== Nalog sheet (detail view + PDF) ===== */
+.sheet{background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:22px;--sl:var(--line);--sm:var(--muted)}
+.s-top{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;border-bottom:2px solid var(--ink);padding-bottom:12px;margin-bottom:12px}
+.s-firm{display:flex;gap:12px;align-items:center;min-width:0}
+.s-firm img{max-height:56px;max-width:220px;object-fit:contain;display:block}
+.s-firm .s-logo{height:28px;max-height:none;max-width:250px;margin-bottom:6px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) #dBody .s-logo{content:var(--logo-w)}}
+:root[data-theme="dark"] #dBody .s-logo{content:var(--logo-w)}
+.s-firm .fn{font-family:var(--f-display);font-weight:700;font-size:20px;line-height:1.1}
+.s-firm .fa{font-size:12px;color:var(--sm)}
+.s-no{text-align:right}
+.s-cl{display:flex;align-items:center;justify-content:center;flex:0 1 auto}
+.s-cl img{max-height:64px;max-width:190px;object-fit:contain;display:block;background:#fff;padding:4px;border-radius:4px}
+.s-no .t{font-family:var(--f-display);font-weight:700;font-size:22px;text-transform:uppercase;letter-spacing:.02em}
+.s-no .n{font-family:var(--f-mono);font-size:15px}
+.s-no .d{font-size:12px;color:var(--sm)}
+.s-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px 20px;margin-bottom:10px}
+.s-blk h3{font-family:var(--f-display);font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin:0 0 4px;color:var(--sm);border-bottom:1px solid var(--sl);padding-bottom:3px}
+.s-kv{display:grid;grid-template-columns:minmax(90px,40%) 1fr;gap:2px 10px;font-size:13px}
+.s-kv dt{color:var(--sm)}
+.s-kv dd{margin:0;min-width:0;overflow-wrap:anywhere}
+.s-txt{font-size:13px;white-space:pre-wrap;margin:0 0 6px}
+.s-tbl{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:10px}
+.s-tbl th,.s-tbl td{border:1px solid var(--sl);padding:4px 6px;text-align:left}
+.s-tbl th{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--sm);font-weight:600}
+.s-ph{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:6px;margin-bottom:10px}
+.s-ph img{width:100%;aspect-ratio:4/3;object-fit:cover;border:1px solid var(--sl);display:block}
+.s-sign{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:16px}
+.s-sign .box{border-bottom:1px solid var(--ink);height:80px;display:flex;align-items:flex-end;justify-content:center}
+.s-sign .box img{max-height:76px;max-width:100%}
+.s-sign .cap{font-size:12px;color:var(--sm);text-align:center;margin-top:4px}
+.s-foot{font-size:11px;color:var(--sm);margin-top:14px;border-top:1px solid var(--sl);padding-top:6px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.pdfhost{position:fixed;left:-10000px;top:0;width:794px}
+.pdfhost .sheet{width:794px;border:0;border-radius:0;padding:40px 44px;background:#ffffff;color:#16212a;--ink:#16212a;--sl:#c9d1d8;--sm:#55626d}
+@media (max-width:520px){.row{grid-template-columns:1fr auto}.row .no{grid-column:1/-1}.s-sign{grid-template-columns:1fr}}
+.role{display:inline-block;margin-left:6px;font-size:10px;letter-spacing:.08em;border:1px solid var(--bar-muted);border-radius:3px;padding:0 5px;color:var(--bar-ink);vertical-align:1px}
+.pv-bar{background:color-mix(in srgb,var(--vis) 16%,var(--surface));border-bottom:1px solid var(--vis);padding-block:8px;font-size:14px}
+.pv-in{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.limit-note{font-size:13px;color:var(--muted);margin:-8px 0 14px}
+.roles{display:flex;flex-direction:column;gap:10px}
+.role-card{border:1px solid var(--line);border-radius:6px;padding:12px;background:var(--bg)}
+.role-card .rc-h{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-bottom:10px}
+.role-card .rc-h .f{flex:1 1 200px}
+.urow{display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:var(--surface);border:1px solid var(--line);border-radius:5px;padding:8px 12px}
+.urow img{width:30px;height:30px;border-radius:50%;flex:none}
+.urow .nm{flex:1 1 160px;min-width:0;overflow-wrap:anywhere}
+.urow .nm small{display:block;color:var(--muted);font-size:12px}
+.urow select{width:auto;min-width:150px}
+.timer{display:flex;gap:14px;align-items:center;justify-content:space-between;flex-wrap:wrap;border-left:6px solid var(--line)}
+.timer.run{border-left-color:var(--ok)}.timer.done{border-left-color:var(--accent)}
+.tm-clock{font-family:var(--f-mono);font-size:34px;line-height:1.1;font-variant-numeric:tabular-nums;letter-spacing:.02em}
+.tm-b{display:flex;gap:8px;flex-wrap:wrap}
+.tm-start{background:var(--ok);border-color:var(--ok);color:#fff;font-size:18px;padding:12px 28px}
+.tm-stop{background:var(--danger);border-color:var(--danger);color:#fff;font-size:18px;padding:12px 28px}
+.scan{display:flex;gap:6px}
+.scan input{flex:1;min-width:0}
+.scan-b{padding:8px 12px;white-space:nowrap}
+.hint{font-size:12px;color:var(--muted);min-height:1em}
+.hint.ok{color:var(--ok)}.hint.err{color:var(--danger)}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg .chk{padding:8px 16px 8px 10px;font-size:15px}
+.seg.invalid-g .chk{border-color:var(--danger)}
+.dops{display:flex;flex-direction:column;gap:10px;margin-bottom:10px}
+.dop{border:1px solid var(--line);border-radius:6px;padding:12px;background:var(--bg);position:relative}
+.dop .dop-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.dop .dop-h b{font-family:var(--f-display);font-size:16px}
+.dx-add{width:100%;justify-content:center;border-style:dashed;font-size:15px}
+.dx-add span{font-size:20px;line-height:1}
+.tm-pause{background:var(--vis-ink);border-color:var(--line);color:var(--ink);background:var(--surface);font-size:18px;padding:12px 22px}
+.timer.pause{border-left-color:var(--t-dem)}
+.timer.pause .tm-clock{color:var(--muted)}
+#nf.locked .sec:not(#timerSec){opacity:.75}
+.login-wrap{position:fixed;inset:0;z-index:50;background:var(--bar);display:grid;place-items:center;padding:16px;overflow:auto}
+.login{background:var(--surface);color:var(--ink);border-radius:10px;padding:24px;width:100%;max-width:380px;display:flex;flex-direction:column;gap:12px}
+.login h1{margin:0}.login .lead{margin:-8px 0 4px}.login .btn{justify-content:center;padding:12px}
+.login-logo img{height:28px;width:auto;display:block}
+.um{position:relative;flex:none}
+.um-btn{appearance:none;border:1px solid var(--bar-muted);background:transparent;color:var(--bar-ink);border-radius:999px;padding:6px 12px;font:inherit;font-size:13px;cursor:pointer;max-width:42vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.um-menu{position:absolute;right:0;top:calc(100% + 6px);background:var(--surface);border:1px solid var(--line);border-radius:6px;box-shadow:0 8px 24px rgba(0,0,0,.2);display:flex;flex-direction:column;min-width:180px;z-index:20}
+.um-menu button{appearance:none;border:0;background:none;text-align:left;padding:10px 14px;font:inherit;color:var(--ink);cursor:pointer}
+.um-menu button:hover{background:var(--bg)}
+.geo-row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.geo-map{height:240px;border-radius:6px;margin-top:10px;border:1px solid var(--line);max-width:100%}
+.urow.off{opacity:.6}.pw-row{display:flex;gap:6px;flex:1 1 100%}
+.brand-sub{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media (max-width:560px){.brand-sub{font-size:0}.brand-sub .role{font-size:10px;margin-left:0}}
+.fab{position:fixed;right:calc(20px + env(safe-area-inset-right,0px));bottom:calc(22px + env(safe-area-inset-bottom,0px));width:62px;height:62px;border-radius:50%;border:0;background:var(--vis);color:var(--vis-ink);display:grid;place-items:center;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.28);z-index:6;transition:transform .15s}
+.fab:hover{transform:scale(1.05)}
+#v-arhiva{padding-bottom:70px}
+.overlay{position:fixed;inset:0;z-index:30;background:rgba(8,14,18,.55);display:flex;align-items:flex-end;justify-content:center;padding:0 max(0px,env(safe-area-inset-right,0px)) 0 max(0px,env(safe-area-inset-left,0px))}
+.sheet-panel{background:var(--surface);width:100%;max-width:560px;border-radius:14px 14px 0 0;padding:16px 16px calc(18px + env(safe-area-inset-bottom,0px));max-height:90%;overflow-y:auto}
+@media (min-width:640px){.overlay{align-items:center}.sheet-panel{border-radius:10px}}
+.sheet-panel .types{grid-template-columns:1fr;margin:0}
+.sheet-panel .type{padding:14px 14px 14px 20px}
+.sheet-panel .type b{font-size:20px}
+.tip-banner{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--line);border-left:6px solid var(--c);border-radius:6px;padding:12px 14px;margin-bottom:12px}
+.tip-banner .tb-l{font-size:12px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+.tip-banner .tb-n{font-family:var(--f-display);font-weight:700;font-size:24px;line-height:1.1}
+.draft{display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:color-mix(in srgb,var(--vis) 18%,var(--surface));border:1px solid var(--vis);border-radius:6px;padding:10px 12px;margin-bottom:12px}
+.krow{display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:var(--surface);border:1px solid var(--line);border-radius:5px;padding:10px 14px}
+.krow .mid{flex:1 1 200px;min-width:0}
+.clogo{background:#fff;border:1px solid var(--line);border-radius:5px;display:grid;place-items:center;flex:none;overflow:hidden}
+.clogo img{max-width:100%;max-height:100%;object-fit:contain;display:block}
+.clogo.sm{width:56px;height:40px;padding:3px}
+.clogo.md{width:140px;height:80px;padding:6px}
+.clogo.empty-l{color:var(--muted);font-size:11px;text-align:center;background:var(--bg)}
+.klogo-row{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:14px}
+.s-clogo{max-height:52px;max-width:160px;object-fit:contain;display:block;margin-bottom:6px;background:#fff;padding:4px;border-radius:4px}
+.krow .mid b{display:block}
+.krow .mid span{font-size:13px;color:var(--muted)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+</head>
+<body>
+<header class="gut"><div class="wrap">
+  <div class="hrow">
+    <div class="brand"><span id="logoSlot"></span>
+      <div class="brand-txt"><div class="brand-name" id="firmName">Radni nalozi</div><div class="brand-sub">Radni nalozi · teren <span class="role" id="roleTag" hidden></span></div></div>
+    </div>
+  </div>
+  <nav aria-label="Glavni meni">
+    <a href="#nalozi" data-v="arhiva">Nalozi</a>
+    <a href="#klijenti" data-v="klijenti" id="navKl" hidden>Klijenti</a>
+    <a href="#uloge" data-v="uloge" data-admin hidden>Korisnici i uloge</a>
+    <a href="#podesavanja" data-v="podesavanja" data-admin hidden>Podešavanja</a>
+  </nav>
+</div></header>
+<div class="pv-bar gut" id="pvBar" hidden><div class="wrap pv-in"><span id="pvTxt">Pregled uloge</span><button class="btn sm" id="pvOff">Vrati se na administratora</button></div></div>
+
+<main class="gut"><div class="wrap">
+
+<!-- ========== NOVI NALOG ========== -->
+<section id="v-novi" hidden>
+  <div class="dhead"><a href="#nalozi" class="btn sm">← Nalozi</a></div>
+  <div class="tip-banner" id="tipBanner"></div>
+
+  <form id="nf" novalidate>
+    <div class="sec timer" id="timerSec">
+      <div><div class="l">Radno vreme</div><div class="tm-clock" id="tmClock">00:00:00</div><div class="stat" id="tmInfo">Pritisnite Start kada počnete posao.</div></div>
+      <div class="tm-b"><button type="button" class="btn tm-start" id="tmStart">Start</button><button type="button" class="btn tm-pause" id="tmPause" hidden>Pauza</button><button type="button" class="btn tm-start" id="tmResume" hidden>Nastavi</button><button type="button" class="btn tm-stop" id="tmStop" hidden>Stop</button></div>
+    </div>
+    <div class="sec" id="editTimes" hidden>
+      <div class="sec-h"><h2>Radno vreme</h2><small>Izmena zatvorenog naloga</small></div>
+      <div class="grid">
+        <div class="f"><label class="l req" for="e_start">Početak rada</label><input type="datetime-local" id="e_start"></div>
+        <div class="f"><label class="l req" for="e_stop">Kraj rada</label><input type="datetime-local" id="e_stop"></div>
+        <div class="f"><label class="l" for="e_pauze">Pauze (minuta)</label><input type="number" id="e_pauze" min="0" step="1" inputmode="numeric"></div>
+        <div class="f" style="justify-content:flex-end"><span class="stat" id="e_traj"></span></div>
+      </div>
+    </div>
+    <div class="sec">
+      <div class="sec-h"><h2>Klijent</h2><span style="display:flex;gap:10px;align-items:center"><small id="klStat"></small><span id="kSelLogo"></span></span></div>
+      <div class="grid">
+        <div class="f full"><label class="l" for="k_find">Pronađite klijenta</label><input type="search" id="k_find" placeholder="Kucajte naziv, PIB ili mesto" autocomplete="off"></div>
+        <div class="f full"><label class="l" for="k_sel">Klijent iz spiska</label><select id="k_sel"><option value="">— Novi klijent (ručni unos) —</option></select></div>
+        <div class="f"><label class="l req" for="k_naziv">Naziv klijenta</label><input type="text" id="k_naziv" data-req></div>
+        <div class="f"><label class="l" for="k_pib">PIB</label><input type="text" id="k_pib" inputmode="numeric"></div>
+        <div class="f full"><label class="l" for="k_adresa">Adresa / lokacija rada</label><input type="text" id="k_adresa"></div>
+        <label class="chk f full" id="k_addWrap" style="flex-direction:row;width:fit-content"><input type="checkbox" id="k_add" checked>Dodaj ovog klijenta u spisak</label>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h"><h2>Lokacija rada</h2><small id="geoStat">Nije očitana</small></div>
+      <div class="geo-row"><button type="button" class="btn" id="geoBtn">Očitaj trenutnu lokaciju</button><span class="stat" id="geoTxt">Lokacija se beleži uz nalog. Marker na mapi možete pomeriti ako treba ispravka.</span></div>
+      <div id="geoMap" class="geo-map" hidden></div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h"><h2>Vozilo klijenta</h2></div>
+      <div class="grid">
+        <div class="f full" id="v_selWrap" hidden><label class="l" for="v_sel">Vozilo iz spiska klijenta</label><select id="v_sel"></select></div>
+        <div class="f"><label class="l req" for="v_reg">Registarska oznaka</label><input type="text" id="v_reg" class="mono" data-req autocapitalize="characters"></div>
+        <div class="f"><label class="l" for="v_model">Marka i model</label><input type="text" id="v_model"></div>
+        <div class="f"><label class="l" for="v_vin">Broj šasije (VIN)</label><input type="text" id="v_vin" class="mono" autocapitalize="characters"></div>
+        <div class="f"><label class="l" for="v_km">Kilometraža / radni sati</label><div class="scan"><input type="number" id="v_km" inputmode="decimal" min="0" step="any"><select id="v_jed" aria-label="Jedinica" style="width:auto"><option value="km">km</option><option value="h">radni sati</option></select></div></div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h"><h2>GPS uređaj</h2><small>Stanje, IMEI i SIM1 su obavezni</small></div>
+      <div class="grid">
+        <div class="f"><label class="l" for="u_model">Model uređaja</label><input type="text" id="u_model" list="gpsList" placeholder="npr. Teltonika FMC130"><datalist id="gpsList"><option value="Teltonika FMB920"><option value="Teltonika FMC130"><option value="Teltonika FMC650"><option value="Teltonika FMB140"></datalist></div>
+        <div class="f"><span class="l req" id="u_stanje_l">Stanje uređaja</span><div class="seg" role="radiogroup" aria-labelledby="u_stanje_l" id="u_stanje"><label class="chk"><input type="radio" name="u_stanje" id="u_st_nov" value="Nov">Nov</label><label class="chk"><input type="radio" name="u_stanje" id="u_st_pol" value="Polovan">Polovan</label></div></div>
+        <div class="f"><label class="l req" for="u_imei">IMEI uređaja</label><div class="scan"><input type="text" id="u_imei" class="mono" inputmode="numeric" maxlength="15" data-req autocomplete="off" placeholder="15 cifara"><label class="btn scan-b" title="Slikajte bar ili QR kod"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M3 7V4h3M21 7V4h-3M3 17v3h3M21 17v3h-3M7 8v8M10 8v8M13 8v8M17 8v8" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg>Skeniraj<input type="file" accept="image/*" capture="environment" data-scan="imei" hidden></label></div><small class="hint" id="h_imei"></small></div>
+        <div class="f"><label class="l req" for="u_iccid">ICCID – SIM1</label><div class="scan"><input type="text" id="u_iccid" class="mono" inputmode="numeric" maxlength="22" data-req autocomplete="off" placeholder="89…, 19–20 cifara"><label class="btn scan-b" title="Slikajte bar ili QR kod"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M3 7V4h3M21 7V4h-3M3 17v3h3M21 17v3h-3M7 8v8M10 8v8M13 8v8M17 8v8" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg>Skeniraj<input type="file" accept="image/*" capture="environment" data-scan="iccid" hidden></label></div><small class="hint" id="h_iccid"></small></div>
+        <div class="f"><label class="l req" for="u_op1">Mobilni operater – SIM1</label><select id="u_op1" data-req><option value="">— izaberite —</option><option>MTS</option><option>A1</option><option>Yettel</option><option>A1 roming</option><option>Truphone</option></select></div>
+        <div class="f"><label class="l" for="u_iccid2">ICCID – SIM2 <small style="text-transform:none;letter-spacing:0;font-weight:400">(roming, ako postoji)</small></label><div class="scan"><input type="text" id="u_iccid2" class="mono" inputmode="numeric" maxlength="22" autocomplete="off" placeholder="89…, 19–20 cifara"><label class="btn scan-b" title="Slikajte bar ili QR kod"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M3 7V4h3M21 7V4h-3M3 17v3h3M21 17v3h-3M7 8v8M10 8v8M13 8v8M17 8v8" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg>Skeniraj<input type="file" accept="image/*" capture="environment" data-scan="iccid2" hidden></label></div><small class="hint" id="h_iccid2"></small></div>
+        <div class="f"><label class="l" for="u_op2">Mobilni operater – SIM2</label><select id="u_op2"><option value="">— izaberite —</option><option>MTS</option><option>A1</option><option>Yettel</option><option>A1 roming</option><option>Truphone</option></select></div>
+      </div>
+    </div>
+
+    <div class="sec" id="tipSec">
+      <div class="sec-h"><h2 id="tipTitle">Ugradnja opreme</h2><small>Podaci o intervenciji</small></div>
+      <div class="grid" id="tipFields"></div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h"><h2>Dodatna oprema</h2><small id="dxCount">Nema dodatne opreme</small></div>
+      <div class="dops" id="dxList"></div>
+      <datalist id="dopList"><option value="RFID čitač"><option value="Sonda goriva"><option value="Kamera"><option value="Taster za alarm"><option value="Temperaturni senzor"><option value="CAN adapter"><option value="Identifikacija vozača"></datalist>
+      <button type="button" class="btn dx-add" id="dxAdd"><span aria-hidden="true">+</span> Dodaj opremu</button>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h"><h2>Rad</h2></div>
+      <div class="grid">
+        <div class="f"><label class="l req" for="r_datum">Datum</label><input type="date" id="r_datum" data-req></div>
+        <div class="f"><label class="l req" for="r_serviser">Serviser</label><input type="text" id="r_serviser" data-req></div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h"><h2>Napomena</h2></div>
+      <textarea id="napomena" aria-label="Napomena"></textarea>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h"><h2>Fotografije</h2><small id="phCount">0 slika</small></div>
+      <div class="photos" id="photos"></div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h"><h2>Potpis klijenta</h2></div>
+      <div class="grid" style="margin-bottom:12px">
+        <div class="f"><label class="l req" for="potpisnik">Odgovorno lice – ime i prezime</label><input type="text" id="potpisnik" data-req></div>
+        <div class="f"><label class="l" for="k_email">Pošalji PDF klijentu na e-poštu</label><input type="email" id="k_email" autocomplete="off" placeholder="ostavite prazno ako ne treba"></div>
+      </div>
+      <div class="sig-box"><img id="sigOld" alt="Postojeći potpis" hidden style="position:absolute;inset:8px 16px 40px;max-height:120px;margin:auto;pointer-events:none"><canvas id="sig" aria-label="Polje za potpis"></canvas><div class="sig-line"></div><div class="sig-hint" id="sigHint">Potpišite se prstom iznad linije</div><button type="button" class="btn sm sig-act" id="sigClr">Obriši potpis</button></div>
+    </div>
+
+    <div class="actions">
+      <div class="msg" id="fMsg" role="alert"></div>
+      <button type="button" class="btn" id="fReset">Odbaci nalog</button>
+      <button type="submit" class="btn pri" id="fSave">Stop i zatvori nalog</button>
+    </div>
+  </form>
+</section>
+
+<!-- ========== ARHIVA ========== -->
+<section id="v-arhiva" hidden>
+  <h1>Radni nalozi</h1>
+  <p class="lead">Novi nalog otvarate dugmetom <b>+</b> dole desno.</p>
+  <div id="draftNote"></div><p class="limit-note" id="limitNote" hidden></p>
+  <div class="toolbar"><input type="search" id="q" placeholder="Pretraga: broj, klijent, registracija, IMEI, serviser" aria-label="Pretraga"><button class="btn" id="csvBtn" hidden>Izvezi u Excel (CSV)</button></div>
+  <div class="filters" id="filters"></div>
+  <div class="count" id="count"></div>
+  <div class="list" id="list"><div class="empty">Učitavanje naloga…</div></div>
+  <button class="fab" id="fab" aria-label="Novi radni nalog"><svg viewBox="0 0 24 24" width="30" height="30" aria-hidden="true"><path d="M12 4v16M4 12h16" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" fill="none"/></svg></button>
+</section>
+
+<!-- ========== KLIJENTI ========== -->
+<section id="v-klijenti" hidden>
+  <h1>Klijenti</h1>
+  <p class="lead">Serviser bira klijenta iz ovog spiska, a podaci i vozila se popunjavaju sami.</p>
+  <div class="sec" id="klForm">
+    <div class="sec-h"><h2 id="klFormT">Novi klijent</h2><button type="button" class="btn sm" id="klCancel" hidden>Odustani od izmene</button></div>
+    <div class="grid">
+      <div class="f"><label class="l req" for="kl_naziv">Naziv klijenta</label><input type="text" id="kl_naziv"></div>
+      <div class="f"><label class="l" for="kl_pib">PIB</label><input type="text" id="kl_pib" inputmode="numeric"></div>
+      <div class="f"><label class="l" for="kl_mod">Model saradnje</label><input type="text" id="kl_mod" list="modList"><datalist id="modList"><option value="Kupovina"><option value="Renta"><option value="Renta/Sonda kupovina"><option value="Službena vozila"></datalist></div>
+      <div class="f"><label class="l" for="kl_kontakt">Kontakt osoba</label><input type="text" id="kl_kontakt"></div>
+      <div class="f"><label class="l" for="kl_tel">Telefon</label><input type="text" id="kl_tel" inputmode="tel"></div>
+      <div class="f"><label class="l" for="kl_email">E-pošta za radne naloge</label><input type="email" id="kl_email" autocomplete="off"></div>
+      <div class="f full"><label class="l" for="kl_adresa">Adresa</label><input type="text" id="kl_adresa"></div>
+    </div>
+    <div class="klogo-row"><div class="clogo md" id="klLogoPrev"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><label class="btn sm" id="klLogoBtn">Otpremi logo klijenta<input type="file" id="klLogoIn" accept="image/png,image/jpeg,image/svg+xml,image/webp" hidden></label><button type="button" class="btn sm" id="klLogoDel" hidden>Ukloni logo</button></div>
+      <span class="stat" id="klLogoStat"></span></div>
+    <div class="l" style="margin:14px 0 6px">Vozila klijenta</div>
+    <div class="scroll"><table class="eq"><thead><tr><th>Reg. oznaka</th><th>Marka i model</th><th>VIN</th><th></th></tr></thead><tbody id="klVoz"></tbody></table></div>
+    <button type="button" class="btn sm" id="klVozAdd">+ Dodaj vozilo</button>
+    <div class="actions"><div class="msg" id="klMsg" role="alert"></div><button type="button" class="btn pri" id="klSave">Sačuvaj klijenta</button></div>
+  </div>
+  <div class="toolbar"><input type="search" id="kq" placeholder="Pretraga klijenata" aria-label="Pretraga klijenata"></div>
+  <div class="count" id="kCount"></div>
+  <div class="list" id="kList"><div class="empty">Učitavanje klijenata…</div></div>
+</section>
+
+<!-- ========== POTVRDA ZATVARANJA ========== -->
+<div class="overlay" id="closeDlg" hidden>
+  <div class="sheet-panel" role="alertdialog" aria-modal="true" aria-labelledby="cdT" aria-describedby="cdB">
+    <div class="sec-h"><h2 id="cdT">Zatvoriti radni nalog?</h2></div>
+    <p id="cdB" style="margin:0 0 10px">Da li ste sigurni da ste završili posao? Posle zatvaranja <b>naknadne promene neće biti moguće</b> i radni nalog će biti zatvoren i sačuvan.</p>
+    <p class="note" id="cdInfo" style="margin-bottom:14px"></p>
+    <div class="actions" style="margin-top:0"><button type="button" class="btn" id="cdNo">Odustani</button><button type="button" class="btn tm-stop" id="cdYes">Da, zatvori nalog</button></div>
+  </div>
+</div>
+
+<!-- ========== IZBOR VRSTE ========== -->
+<div class="overlay" id="chooser" hidden>
+  <div class="sheet-panel" role="dialog" aria-modal="true" aria-labelledby="chT">
+    <div class="sec-h"><h2 id="chT">Koji posao radite?</h2><button type="button" class="xbtn" id="chClose" aria-label="Zatvori">×</button></div>
+    <div id="chDraft"></div>
+    <div class="types" id="types"></div>
+  </div>
+</div>
+
+<!-- ========== DETALJ ========== -->
+<section id="v-detalj" hidden>
+  <div class="dhead">
+    <a href="#nalozi" class="btn sm">← Nalozi</a>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <div class="seg" id="dSeg" role="radiogroup" aria-label="Prikaz naloga" hidden><label class="chk"><input type="radio" name="dview" id="dv_k" value="klijent" checked>Za klijenta</label><label class="chk"><input type="radio" name="dview" id="dv_i" value="interni">Interni</label></div>
+      <button class="btn pri" id="dPdf">Preuzmi PDF</button>
+      <button class="btn" id="dMail" hidden>Pošalji mejlom</button>
+      <button class="btn" id="dEdit" hidden>Izmeni nalog</button>
+      <button class="btn dng" id="dDel" hidden>Obriši</button>
+    </div>
+  </div>
+  <div id="dConfirm"></div>
+  <div id="dBody"></div>
+</section>
+
+<!-- ========== ULOGE ========== -->
+<section id="v-uloge" hidden>
+  <h1>Korisnici i uloge</h1>
+  <p class="lead">Uloga određuje šta osoba vidi i šta sme da radi u aplikaciji. Administratori uvek imaju pun pristup.</p>
+  <div class="sec">
+    <div class="sec-h"><h2>Uloge</h2><button type="button" class="btn sm" id="rAdd">+ Nova uloga</button></div>
+    <div class="grid" style="margin-bottom:12px"><div class="f"><label class="l" for="defUloga">Uloga za osobe bez dodeljene uloge</label><select id="defUloga"></select></div></div>
+    <div class="roles" id="rList"></div>
+    <div class="actions"><div class="msg" id="rMsg" role="alert"></div><button type="button" class="btn pri" id="rSave">Sačuvaj uloge</button></div>
+  </div>
+  <div class="sec">
+    <div class="sec-h"><h2>Korisnici</h2><button type="button" class="btn sm" id="uAddBtn">+ Novi korisnik</button></div>
+    <form class="role-card" id="uForm" hidden novalidate style="margin-bottom:12px">
+      <div class="grid">
+        <div class="f"><label class="l req" for="nu_name">Ime i prezime</label><input type="text" id="nu_name" autocomplete="off"></div>
+        <div class="f"><label class="l req" for="nu_user">Korisničko ime ili e-pošta</label><input type="text" id="nu_user" autocomplete="off" autocapitalize="none" placeholder="npr. petar.petrovic"></div>
+        <div class="f"><label class="l req" for="nu_pass">Početna lozinka</label><input type="text" id="nu_pass" autocomplete="off" placeholder="bar 8 znakova"></div>
+        <div class="f"><label class="l" for="nu_role">Uloga</label><select id="nu_role"></select></div>
+        <label class="chk f full" style="flex-direction:row;width:fit-content"><input type="checkbox" id="nu_admin">Administrator (pun pristup)</label>
+      </div>
+      <div class="actions"><div class="msg" id="nuMsg" role="alert"></div><button type="button" class="btn" id="nuCancel">Odustani</button><button type="submit" class="btn pri">Dodaj korisnika</button></div>
+    </form>
+    <div class="list" id="uList"><div class="empty">Učitavanje korisnika…</div></div>
+    <p class="note" style="margin-top:12px">Svaki zaposleni ima svoje korisničko ime i lozinku. Početnu lozinku mu saopštite lično; može je promeniti u meniju sa svojim imenom. Deaktiviran korisnik više ne može da se prijavi niti da vidi podatke.</p>
+  </div>
+  <div class="sec">
+    <div class="sec-h"><h2>Provera</h2></div>
+    <div class="km"><div class="f"><label class="l" for="pvSel">Pogledaj aplikaciju kao</label><select id="pvSel"></select></div><button type="button" class="btn" id="pvOn">Prikaži</button></div>
+  </div>
+</section>
+
+<!-- ========== PODEŠAVANJA ========== -->
+<section id="v-podesavanja" hidden>
+  <h1>Podešavanja</h1>
+  <p class="lead">Podaci firme se štampaju u zaglavlju svakog naloga.</p>
+  <p class="note" id="setRO" hidden>Samo administratori mogu da menjaju podešavanja.</p>
+  <div class="sec">
+    <div class="sec-h"><h2>Logo</h2></div>
+    <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap">
+      <div id="logoPrev"><span class="stat">Logo nije postavljen.</span></div>
+      <label class="btn" id="logoBtn">Otpremi logo<input type="file" id="logoIn" accept="image/png,image/jpeg,image/svg+xml,image/webp" hidden></label>
+    </div>
+  </div>
+  <div class="sec">
+    <div class="sec-h"><h2>Firma</h2></div>
+    <div class="grid">
+      <div class="f"><label class="l" for="c_naziv">Naziv firme</label><input type="text" id="c_naziv"></div>
+      <div class="f"><label class="l" for="c_pib">PIB</label><input type="text" id="c_pib"></div>
+      <div class="f"><label class="l" for="c_mb">Matični broj</label><input type="text" id="c_mb"></div>
+      <div class="f"><label class="l" for="c_tel">Telefon</label><input type="text" id="c_tel"></div>
+      <div class="f full"><label class="l" for="c_adresa">Adresa</label><input type="text" id="c_adresa"></div>
+      <div class="f"><label class="l" for="c_email">E-pošta</label><input type="text" id="c_email"></div>
+      <div class="f"><label class="l" for="c_web">Web sajt</label><input type="text" id="c_web"></div>
+    </div>
+  </div>
+  <div class="sec">
+    <div class="sec-h"><h2>Nalog za klijenta</h2><small>Šta klijent vidi na svom primerku</small></div>
+    <p class="stat" style="margin:0 0 10px">Označeni podaci se štampaju na PDF-u za klijenta. Interni nalog uvek sadrži sve podatke.</p>
+    <div class="checks" id="vidList"></div>
+  </div>
+  <div class="actions"><div class="msg" id="cMsg" role="alert"></div><button class="btn pri" id="cSave">Sačuvaj podešavanja</button></div>
+</section>
+
+</div></main>
+<div class="pdfhost" id="pdfhost" aria-hidden="true"></div>
+
+<link rel="stylesheet" href="vendor/leaflet.css">
+<script src="vendor/html2canvas.min.js"></script>
+<script src="vendor/jspdf.umd.min.js"></script>
+<script src="vendor/zxing.min.js"></script>
+<script src="vendor/leaflet.js"></script>
+<script src="vendor/supabase.js"></script>
+<script src="config.js"></script>
+<script src="rn-native.js"></script>
+<script src="rn-api.js"></script>
+<script>
+(function(){
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const ls={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+function toast(t){const d=document.createElement("div");d.className="toast";d.textContent=t;document.body.appendChild(d);setTimeout(()=>d.remove(),3200)}
+
+const LOGO_W="data:image/png;base64,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",LOGO_D="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAxMAAABYCAYAAACOLapiAAA1zElEQVR42u2dd5gURd6A39nZBZYlCUKRJBQStEXMCcV8pjOdZz5Pz/yhmBXvOLOnGA7PnHM4E54ZPDGAqKCIoDaCSAsIapPDwsLuhO+Pas51t2d3ZrqmZ2a33ufZR5mZrq7uir/6pUgymcRgMBgMBoPBYDAYMqXEvAKDwWAwGAwGg8FghAmDwWAwGAwGg8FghAmDwWAwGAwGg8FghAmDwWAwGAwGg8FghAmDwWAwGAwGg8FgUJSaV2AwGAx6EdJqA3QFugP9vI8HAML7/2lAFeACDrDUdezl5s0ZDM2PqrvvZ80FwyntPdC8DENB0mn+bCNMGAwGQwgCxObADsB+wFbAFp5A0c3n53/x/rsa+BH4WUjLBSYCk1zH/s68UYPBYDBgNBMGg8HQpAWIHYCjgd8DA4HyDIto7/1t4/37T165C4B3gI+Bp13HNgmBDAaDwWCECYPBYGgCAkRn4M/AUcCeObpNb+Bs7+86Ia13gCdcx55iWsBgMBgMRpgwGAyG4hMiegAXAWehtAlh0Qc4BzhHSOs1YIzr2JNMixgMBoPBCBMGg8FQ+EJEK+AS4CqgVZqXzcDzhQC+A5Z4n68BWteae3fynLK7AxbQsZFyjwSOFNJ6CRjtOvZ000IGg8FgMMKEQffmR6BssAcDPWpFlOnSwGWrgG+B5cAC7/+/cR17oXmjhmY8lo4Hbgb6NvLTRcDrwEzgPdex5/n+Kp6EaKT2J0/XulcFcLg3bg8Btm/gfscCxwpp3QhcbXwqDIa0xnMJKjDCtsAQT5Dv6Any7Rq49Gtghbc2LkT5Ms1zHTumpWLxuGkcQ1ETSSaTuqOZ9AxQhO06dk0IpgqdAxSx0HXsFQU4SQ4DhgFHeJNkC01Ffwe8DYxzHfu/eRaQugUo4mfXsd2Q69zFE+SyZUWmwpyQ1tYB236+69irfMqNeAtuMRxAzHUde13AtqsAHgZObOBnMeB54AHgk3ob+liMmimTic38kvicWSTXriH+w3xKOnagpFdfSkRXSrfehtJddqekWw+/OgwCTvEEh/6NbHROdx17Wg42XhYQDbHtfnAde3XI47QrKupWtqxxHdvJ8J59CWAq5zr2jDzMwf2BimJqW6/eHYC9gX28sdRDU9G/AC8B44EPXcden21B62+7gzVXXEKZtCCetnzSKw1NJo1oT8OmOw0fajbGPGBthtdYQFkBrEsbgLrxVQeRvrY7nyztNH/24jCFifeBfQMUcZ3r2NfmeGJZFHAyudV17JEFIkD0AkYAh6FCUeaaed7Eebfr2HNCftYbgL8HKGIdMMB17J9CrPNVwPUBinjJdezjMrznUmDzAPc8yXXsf/uUW+pN4sUw8Q1zHfujAO021NskpBJeVwO3AU+6jr2o7pfJFcupuvt2qt8dR/z7OSTXbVCTbXkLIhUVJKtrSFZWQhwogZKePSnbc2/KL7yCUmvbVHX6I3AjKmJUKka4jn2Pxv5bAVSG3HZrvU3aj56Q9CLweS4PmYS0bgL+GqCIia5j75PhPccBBwe453uuYx8Q8hw8E3Winy3Hu479Yoj13Q24ADg0BB+npcArKNPD+ZleHP9xESt32gOqa4i0T7uqL3rCUbaMR2lAw+Qub8+SLQcBmR5qrgrZxy0V86mv4XbS0HoXAvd3mj97OGFkwBbSKgd2DVjMCCGtaA4nlz00nEpsVwBCRH8hrXtRKtfLQhIkQJlKnQfMFtL6t5DWkBAfO6g6uQJ4L+SmCroBqs7imqocvucNFAeJAGPrNGByA4LEo4B0HfsffoLExtdeZtU+O7Pu+tHEF86npGt3ov23PCDaf8uRJT17vRLZrNPEEtH1rWi/LUdHB/Y/Ltq//+bEY2x8+llW778bVXfeRoqT6Jddxx6Eiu60JEXd7hbSekDje0xq6E+Z0halhdkPuBBlTrJASOs6Ia3uBTq3bAxpbNdmfyGtu0Jum40Br4+HtD7uKqQ1FvgUpVkMYyPZGRUk4QchrdFCWhlZaES36EmrP59CfNUvUFoaVh86GBhZZGtiIkuNAAWimSjWNbXRdivReLMBKMfCIHTMsaR8uYYyNid/QkRUSGs0yvRoeJ471wnADCGtB70TzEIXJgAGeUJYWMTzMPFW53Cy3ghNV5jwxtbjKb6eBAx2HftMPzPHxOJFrDn+cNaeeCyJlcsp3XEQJZt3Po2SkjnAu8BoVD6KYaiT0pEkky+QTC6IVLS5PTp4UDTSrj3rRl7BqqFDqPlkUiqh4mFAAnemqOc5QlofF9AGUgfdgKuBeUJad3taskKaW2oIf1MF6vDtmBDboTpfQn665mpCWq8DU4A/5LG/jgTmCmmdm8lFrS8ZQUkHQXLVqjD70GiCWZOEPdYSRTqHpRo/1RQ+8XTaTacwsYWmck7Noc39UTqKypMgsZcnRIwssI52trfIn1wkG83h3umzwVB7fD3QwNi6wnXsvV3H/sbvyw2P3c+qYTtQ/dabRAf2o0R0jRKLvekJJgNq/XQ28B/gQ9SpP94BzKXEYt9G2rbdKrrNAOJzvmXN4fuxbtSlkEj4CRTrXMe+CHWy6Kel2ENIqynmo2gFnO9t1IaZXgvAy56fVHMfv+d4ZriHF1BfvV9I620hrU7pXFDSrSutRwwnvnwxRMN0U+IdgvmRGgxahYltNZVzlJDWFjl4Vl1CishUhalhorwadTIqC3UuB57xtBSRIuj3jwtpWWb4G2oJEuf4fLUSONh17NtSXbv2zJNYe9ZwSMSJbj0IIhFIJD5E+TFtYiywM8oc8Q+ok8BewKhav+lPMjmVRKJbSV9JRHRj/S1jWDVsB+Jz56TSUryDivzkp8bYVUjrkybaZH2AiUJaR5veC8AHzXjsthbSehYVBKF1AVbxEMAW0toxnR+XDz+HknadSa4O1U+9DKU9NRgKQpjYHn3hak/KwbOepbF+uxLeZPkycF2R9KezgS9DMnsyC7BBx/i6PIUg8ROwrbdhr0eyaj1rjvodG578N6XbSiKdNodYDOAGfpsV+17gj8A0n1CyN6F8A6jlL/A28TiR8nJKtx9I7JuZrNpre2JfTU8lUCxxHXtv4Emfr3dvwgIFwCtCWkeYXkwXIa03m+HYbY8KxXxSoVcVmCKkdWSjG7KugtYjzve0EyVh1nEI8JgZSoZCECa6aizrZM2TzvbAlhqL3CmEibLCM1U4psj61BDgay+sZSHTWUjrVTMFNGtB4gjgVp+vPgEG+jlYA1BdzZojDmDj6+9Sut1AKIluMkdqBfyt1i/nosxyGhNq/8VvAzwcQDIJ8TjRASq2wurf7Uls5vSGQoWeBtyfQqC4pwk342tCWjub3sxhQlqXNaOxOxCwNa/r5Din16tehKkGKT/3DErKN4PKsGMf8BfgTDOUDHkTJrx45H001muw5khBf9f83rqSY9Ut8CUhakA00xf4oggEiiOFtP5upoFmKUh0RoVyrMs3rmMPdR07ZUjUNaceS/X7n1K600CVbOrX8Nrn1ZlT0/VvugJlUlV/vorVUNK7D8RirD5if+ILfmhIoBiO0oTU5TwhrbObcHO+lQOn7GLktnQ2q01g7HYBpqIvX0SYfCik1bvBTVnPHrQ8/PfElyxUZpPh8jD6TNYNRpjImK0IlqzOj4s1JqzRrQrvmON2eY+Gk1QVA62BT4S02hR4PW8Q0jrQTAXNjonUT8b2EyqxVUrW33I9G59/ndLt+kO8nnP0EXWidIwn/agsn9f6915A+a/f1lDSb0uSK1ax9rTjGktmdj7wjM9XDzZhR93OBMvn0pSYIKTVtgkLEm28sdu+SB+hpefv02AStVYnHUeSxK9hGsKfG8vMUDLkQ5jIxWnIEZpOm45Hf9beIbnKhyGk9UqO3mc+2Az4qAjq+XaOnP4NhbkhuQ7/3Cx7u469PNV1sc8/Zf311xDdyjsQrZ/ws3bY6PVkthWorDMv/1arV1NDdOAAaj6axrq/X9qYQHFKHeFkE2804Wb9q5BWH9O7qUDlV2iqvFNvbBQfvYHnG/pB2aEHUbbNziSXLc1H/ToQfk4mgxEm/jc4crER3U9DOZflaDLomINNzvmoWPRNie2EtB6n8O1Zx5vpoFkIEj1ROQvqcoLr2N+nui65cSNrzzyZSJuWRCra+AkSLeoIE229jV22IafrR25LJokO6EHV3WOIzZjWWHn7+8Shl0JaVzbh5r3Y9HAALCGtfzXBsTsK2KOJPM4fGgpRHikro+XhBxNftzwfpk6gtKPXmKFkCFuY6JKj+l0TNBMmuXPQEponysHA3U20n51WBLkdti4CoSfftCiSeja0+vqZAD3gOvYLDRVYdfM1xOwfKOndV/lJ1CdaRwMaBU5Js749gF18yqsnTEQqlAVL5eUjIB5rSDuxFvCLHnOzZ/rZFPmTGaL/48Iiyv2TbhCVG5tYG93dkBlwi4N+RyRanmq+CYNrCTehHc1Aa5jOZ4VGFBVcJBRhIlfRNPYIaH5yLrkN96aTF5v4QHok3eQ9eRZ6zsKQirZFFDnFb0NyGLB3nY9Xuo79fw0Vlqypofr1sZT03Kyhhb0KqGsidQPp2R4/4vO7hb6/jMeIyn7Ep02l5ssvaMTcaRz+5hRhhoD8P2D3On8HovL+PIheq/COQlrHm2H6q+DsHVI1BV7LYdkzvbH6F5RZdO2/kSgfglxk724DPJRyEtthO6I9epNcW5nP9/4uuTssLiZ0zFPr0vwsl3XIpqw4sCGrRTfDE4NyfpvlVTfH8NvQiZnEoD4+x2rA9zSdupxB7u1A16AyhC6ivvlDV1QEpm45lm6fRWXtLWQeEtL6wnXs6Wb+rDeh7JKhY15L4K2AQsgfgR8zvGZWis9vzSaZZXzmdOJLXEo6dfIzb6rNUn4bOKENKvTrAQ1MxiN9xkQC+D71EVAJyY1Jaj54l7KdGg34dhLwe68umzhaSGuHkPr4hAbMx54S0rrZ28idgr55+QUzXKkdzKNLkWslLgJ0+7QtR1kCPOk69vxGfnurkFYPr49epPkg8UQhrWtdx/6u7heRtm1osd9eVD3xGNH27cjjqfQEmm+EpxgqquYSDYfv1T6fHUz6Gv+Ep3WfRPbRU5ejDnSqMnieJLA258KEN7ByGbHnnGyECW+TUJ7Deu2maaKM4h/OURePozLwfuQ69poG6lGGskfdCxieI8HiICGtnVzHnlbgE8h4Ia3ermNXYQDAdewkKlxxpv27OuCt33Ide4OGcXYYUDea0aeuYzfqlBz7eiaJVWspEV0bEybm+9h0DwW+A25DaQlWeULWUFRIWD+/sF+AZamn9iSRihbEpk1Jq92EtK4GxtT56hLCMQvq3pBg5Dr2AuDPQlo/4O/LQoFoyYuVzkJar7qOfVSRChIdgTs0F3sncI3r2KszmP8WA6OFtO5EJZG9XGN9JgtpdXMdu57as8Xhh1H1xGNq3smP7wTAYFQOm/9rhuMnAeTy0OWXLK7ZEFA4mkuB+kzsmOPGHOT5PmRKrpOvbK6pnJu8zQWaVVi3AH1cxz7ddey3GhIkvMmyxnXsia5j3+hJvWcAP+TgvT1WJKEm3zX7EC1ay6BzjK4TySt8PrskrdXE/Uk5YSQb1Qw/08Az3IXSsCz0/ju+gQATjZt0tGpFcvWqtOypXce+wxN0anOc54xeKMLqNejRKGxbBOGoyUM+nWJ1pr0EveviKa5jX5SJIFGnn1a5jn0FSmOqgwWo7PW+82SkvJUXIjaZ73Y4Fzi7GY6dSA5M2smFGW8Ge/5WFKgwsWcIL+/0DDcxu3nSdC7pqmGz1UrzCQcoleTWrmNf6Z36ZTNhVruO/RhgAbqz5w72Mg8XOkOFtG43+5AmIdRsAQyr8/Fk17GnpFVALJauhek4fhviFR+zr66o0IsN8XTjS1zkt/9tnLrOq2UFuDk4HdioYaFta3p9Pa4V0tqnyMZtBcoyQRe7uY79jCbhdyzKBDvIOn0iIF3Hvtx17Bq/H62//S5KyttCSUkhNMmDwA5mKBlyJUwMCKGeJzSW5IXwQwQKDXHNj28k8kymjHEd+0DXsWdrmjCrXMcekakwlwaXF8n4uFRI6xgzTRQ9fv3thrSvjkYzGaWvEtyWu1EhJ1JWRnLtGpJr16Zb7jPU95X6M4VlSrce5WNDQBvvjqbL+/KGZ/tfLJyCPguAU13H/kxzf32FzEx/aoD7gB29dfp517FTOnZXj3+Xje+/TUmX7oXUJhM0Bu4xGGEip1GN/GiHipuezmlGS/RnvCbFCdg2Acu4SGN9RriOfWmOFvnH0es4vaeQVq8iGSMvC2n1NlMFxaqVKKV+7pbVwPs5umVQbdY9pKMHSSaVkBONpjuGN/poGXt7WtxCYq4Gs4SWpueTKnrQmzS/UL/Pu479VI7WxgdQDrE0Ei1qJNDXdezz0gl8kKzawPrRtxOJtoSSCAWWiNbkZDLoFSa8iEn9Q6pruhvlv5AjmzAfOgZ4d7sA22mqx02uY99Dbk8N3yGYWpc0bNgLlQ/NVFG0DAJ6+mwuYmmXEKvJJJDezACLbbXnQ9W4LBGLEWldQaR160zKf5KAJqQh8BO5zTPS3CmGJKJ4uVCGaiiqktxr4E7HP3Tsy8DRrmNv5zr2rZ4Td3oTwZtvs2Hifynt0x8SiUJrngOBf5ihZNCpmRiA0hqEwQFCWun4KYwM8f0FiXh0gqY6jHcdexThmCG8gkpko4OjvUhWxUAfIa1/m+miKDkU/9P/tGndvj0d4mq3kKZM8dcs6zomRfjA35CIRGhZs5H2kWSm43cmKjQ0dXL5FNLmuz3BQzkuN92exvLpnFrgddS1Pp6Zyh9B47o4D3jO++ciVAjqga5jH+s6dlZmj6U77kBZj34klrr5jOLUEH8DDjNDyaBLmAjby/24Rk4ztgsQfzcbtg9wrY7MklWkESdf88R5HfA1ekJG9i+isXKCkNYoM2UUHXXnjGWuY3+TSQGze/ZjXkUpnTZWpbuwz0CFZM6EZaQRGjUeidCuppp4IsnkLfpn45j5YZ1/WyHPmY2xJcHzoawx3b5RnvDWy0Ll9xrKWNJYZnuNjOJXh+qRfnkjMiEq+9D6ikuIrVkKkYJ1UXgd6GeGkkGHMCFDrm9jzk4XhlyfnbNU4W6NHhOnUa5jLyE/jnE62KPIxsuNQlq7m2mjqOjvk8Qr/d3IkqVcPv4Dzt/nGL7brAsdf1lE4qfFJH5aTLKysiGfhQu8jW26jKC+g7QSFmIxkitXkFixnNZLfqYkHufWPQ7mrGXVTJn2Rabvw892vJD8l44MeP0qlE+MoXHe83wMKTATpxLq54TJhkcI75BtoedQrU0L0urUP1HWox/JFcsKVTtRArxB08987ZqpIvfCRNhqrkGpNnNebPHTQq5PX8+2kzxpJe4mP1FXZqInD8OJRThmJgpptTZTB8XgfL0N9c0wM9JKzJo1i+VfzyTRqRNX9RjEj9vvRtth+1K2z/5E2rQh/s0cklVVfkJFJXAs6UeAer6eEAEkFjgkli+lpG8/yrYcQOu+/XhQbsu7XXpRsXghMz7POP/jVz6fDSuQ9rqX4GZO0/2Sf9H0stGjyedvbAE+Xz+gr4ZyxhRzI0fat6P1ZRcTX70kF6FhN2gqZ6t6c1fT2yPvjzr8DfK3lREmGs7cvEMBRXg4OU8JTbIJtWdpuPfojJxI9XOrhjKsEOv7FvUTd2VDGcUVEaU54xepKKNspi1atKC8dWu6Va5h3tJlfHXVLbR48S3aPf8G7V+dQPmIESQr1xL7ag7J6mqI/iaf0H9o/HR0DbVNsSIRKCkhMf8H4t9/T+nOu9P2qbG0HzeJduMmkXzvc6ZtuTWb/7SQ8hZltK6oIAtzqoU+G4J8CxKnAcM1FPVtM+jXNaROkJgphwlp3Vxgz6dDkJjkOnbR+860Ovt0oqI3ySVLdGsnEqjEtCs1lHU84VuFEGKCuAnAlwH/JhphggbDtbbLQ52P8aJI1eX8PL3DbEy9hmlQvT1BfmPCTwC+D1hMhxDV7G8A+2gqa18hrTEYCp0OPtqCDzI6LYhEIBIhHolQkYjTcuOvB3olvXpTcetdtB8/mfJzzyK5bClxZ65a9H9d+M8CvmgkMkoNkQhEoyRXrSRuf0fpTrvS9skXaP/2JFrsfxCRlq2grAWRsjIqkgkiiTjJTfXLbNzGgc/rfLx5DttgYxqCxGVk7mOSiuYQKKEVyozueE3lXVlgiUTbayjjnabQ0JHW5VSMGkm8UrupU2tUcsx9NZX3L8CYAJNzTVCTFCb6Ai2yvHYlyraVLJ2+j6qzGO1B9jkfksB6wnXCDiqEzXIde2EB9J/PA15fTnjaie29jOA3aSrvYiGtw80cWdDU3SQvcB27KuuFPRIhEquvDCy1BtPmzodoN3YcpUN2IG7PJfHzYi/ZXWSTWePiFM7hn1FaSnL9OuIz50C0lDYPPET78R/R8mj/eBORRCKoU+YKn40FOTxF/5822/vrJqR1iJDWP4S0bOA2Tff6xnXsac2kbw90HftF4CNN5b0mpLV5gTzbEA1lzGkqDV3+f2dTZu1IcvnyXASQmYlKpIemhHblZtkhVdjvJk0pek0I0mUSMI1MstBSz9Spdsz08wLU5QFPKDojy+s7Z6jO3wzoFLDd5hVI/5lEcL8HSYamJ0H6uuvYo4S09gL20lDm60JafV3Hnm/mSgrVea42a3N5s7Khe9Ph/c/Y+PzTVN07hpopM4j26kykU6e1xGJDUZmtN4W3PoOS6EvEa4h/NZtIxwrKL7+E8vMupqR7z1y/l7q7kq2EtNq7jp0Lx+V/C2lVog6uunmmoR0Drj0NzeXNhW61NFvLUAnpgjKRcE1P0z0EyJS1BMgNJKR1PPnNg3Se69hTfl25opTttgtV9gyim22mVU6ptX/aBdiJ4NqO8cDeZulpfpTmKcdCGcrm/gqgLdnlnGjvOvZqzxn2qAB1uQn4I+ElrotoOAn8rED6z8IiSjCVqGNaomsBfg8THq9QGdJAH8gZLU84hZbHncz62//BhkfuI/71bKL9+yygZcudiMf/QyTyBNHoY4mFC0hWVtHyuD9SfsmVlG63Y1jvZSn1s9q2yNG9BoT0TAuAB2lmJ52uY28U0jrAE1SDsrWQ1qOuY59BcftMLAzoL9GP/PiDpgy5n9ywAYjm0pH/IJTZclBpZRhwF8oMz4CJ5kSaeQKyZbnr2NUoB8Vs+WutkIqtA5gLLQJ+CVCPwVm8t6Cbmh8LpP+s1JRvgpD9PTYC+2kqTgppvWCmkoKkbnCEX0K7c0kJra+4ig7vf0bLk08k/uMCEj8tWhxpUbZLsmr9fbEvZ1PSYwvaPvIUbZ96KUxBAuofIm0MS9DKIafmOSAFefRfm4o+B9jThbTOyvMjSc2at0zJd56S+qaYyWSu77kC/wSf2TACOMksP0aYIIQcAVMJHgf6cA1xye+rdaqVtTAhpNWbzHJTlOTZV0EXazRrDMJcgD8HTtdU3HFCWpeY6aTgWJ9vu9WSnlvQ9pHnaPfMK0TadaB66rckly6h9aUX0uGTr2h5wimmlYJzt+vYE5vzC3Ad+y7gWU3FPSSktW0BjVuyMHOiyB3s88EUTxDQwbNkF+nS0JyECSGtLYFBAe7reBPgR2TvKNVPSOtKsk/+toZf/S6CTj6DM1THJ4ss8zgNmKuRR1O7oAvw4+iLkf1Pk9Cu4KgbN7UtgRUO2Z0DtDjsKDpM/pLWFwyn3SvvUDH6X0Ratsy6DslgJ5WJJtTGT7uObUwq1Hz2J+AnTcW9n8eEdpE8588izzlEluTx/vcQzGKEphZRy5DbjVy3gPetPVjuRdnYZbw+A0HiYz/kOnYlv9oQx8neKDETO8MZ3mIexAByawI4mFE4jnJ5P0VyHftEIa2BZBeVqy5vCml198yoDPnn2zqCfpegBSYSidpJMjujTCwH1wpFO9ubH6tQJ6yfu469EqCkU2fa3Hlv3YOZCCqkYidP+Fnk2Wxv6kM/ofKjrHMde3kymSQWj2Ut1KSY91vlU6gPOIefY7r5b9gbmKuhnE5ePp0D8/AMLYv0ZB9NIUS/8gklF2Yd/oA69OxF8DxSL6AvhLGBpmfm1CvgqdjPtf79eJ5OLx6sYy+4gnDs/ss1eFL1LZD+s1kOnEHzweGassp2BD5pIidkTYF5QeeM9evX47oulZWVLRYsWBiZPn0GtU4QN3jzxnTvb6z337Wo8M+7AbcJaT0ppHWLkJbYJEAIaZ0hpHU/cCdwGMokIA58h8qIPcUra4F3nxqAL7+cwaRJk9m4cWPZ8uXLo6tXZxWAqYvPe1pDcZmvnWkECd/Dke+pnQQxGAcIad2Yh2AZX2uYh2lSh7ylpWErFPckuAUFXl+82IxMjGYiBUMD3HN2bWHCdexKIa2ngTCNhyd7k+6mOtQIac0i+5BmO2XoXFUVMB7zbgXSf3ZFYxz6PC7Ai72kTW9pKG4HIa3bXMe+nGYQW5riCg3bOQ0TztrR1moAjjlk/+rKysrqk046gYMPOnBTn6mq5Sj5s3ft/kCp69hv1iqvzBMULgF+EdJaBPQE3kVFs7Ndx66di2EXoDfwup+Gq2/fPlww4jymfTG9pn379tww5t7oDWPujXpzeQTYmIYjct0oZvOD5N8IkXXAc8BVrmO7pnunnM9eEtJ6BDhTQ3GjhLTecx37A/SYtZJmlvYgbCGkVV4kfRof5/HK30xiVRuIz5pNSUWoOYJ/RIXg1+GHMwZlSfFliH3IUCTCRJCT8V9cx667yN8WsjBxnV+9ApTXK4OJfoWQ1hJvw5AtWwlpldXehOSJPQjufP1lgSzAbwtp3QBcpaG4yzwBebqZYvLKz3X+3VVIq5vr2D83cE0UZeJRggqWUDZ23Hte4oepPz7y3NhVqOR3s/DPOTNUSGsk8JTr2E94BxUnoEyf3kbZEfdEmQCcCdwP2EJafVFZZFcANspUY2MdQacXsAVKs9DLq+smE82ZKI3IMqAxYWILMsxSnUfmAz8AzwCvBQz52ZwEirOEtCz0ZCUeJ6TVA2Wiu3NIG1kCaib2Av5bhE23xnXs36ogYjESK1dCWYuw6/Kct8afh56cVG2BWc10SHbCCBO+dNUZts117K+FtOYRTrz+Za5jT9AsTHQOOQpSJ1Q85/fy1XG85HtDNJzC/ELhLMBXC2nthh474Xe9jWOS8MwDDA3PNS29cfNCA30ghpc/RUjrZ0+okF7Qg7beHLWdkNaJKL+tqa5jv+Jd+zzwvJBWC2CQkNY/Uad73wD/dB377VrjZyBwJfCulwX6GuAvrmOvqDPOBqNsjjsBLrDa22DPQoVmngPE0j2F9fLy1N1g/kThapaucR37KdOVs+Iwry+30eDD8JbX98JAxwHTTkUqTCyuf7wRJdKyJclEPB/1Od8TKIL6FLZB+cfOL8I2WYHSUgcxT//BCBP1F6P2wED0Z2/+J/rSujfEHTk4DekqpNXZdex07f8/JfP8FHW5Op/CBEq7EzT53lIfLVW+OdTrC10DltMFpW1LYsgXn6C0X7V9V3ZsSJjwyUcCSlNg+0S0Oxo4UUjraE8jcJM3BxzgzTOlwCWuYz/rU/Yc4C9CWj2Bx4DXvTnwZq/84cDBKNOexcB/XcfWEWWlC9CewkyCiY+Pyy1CWq+6jr3GdOeMD0dWCmkd6K03FIBJa7qs0iRMFCP1kg8mli0juXpNPjQTm9jXWxODRsMbTvGZ/tagDk1/ChikImkcsOuzO8Hs/f+bYuK7Hz1OsI016J2k9uUgQFr6TNS/OsxfhglpDcpj3xmuoYwJBbgAx4DfFVCYQ0P2bbnAx/56F12Orq5j3+Y69rGoaHTrUfH5v0Sd4l7jOnY/P0GiTjmLXMf+Her071QhLVdIawLqwOZJ17FPdB37Mk2CRKpNYa5MDSsJHlmoK/CB6c1Z99MpwOVFVu3vNOSaOMzzf6LITFLqh4WtqYFYDCJ5i+exGjhEU1ktKE4Nd8IThLL9q8EIE/UYEtBG3m7g+1dy/Lxvuo69LsV3swI2+DYZ/Haypud5lPyYON1L8IhUoC+ete4F+Gv0OC8aKIjwsLXZ03OK1p0AcSxwlLf5nU7mEe+2RJ3IVgL7Awtdxx6bg/dxio9T81xyl4fmCGAcwYMa3GG6ctb983aU5qtY6ruskX1CupvWMwKsSyMy/Ls3R/MVyXXrSFauI1KW1+jNHxehUKqLdmYWISc+Ex0IZntW2cD3twPH5vB5r25gAvtBSGtNgFOJLTKYLG0hra8Jbuq0h5DWBV7207AEid3Qo5VIoJxGC3VBe1RIayjwFzNNFDVP8dsobVFUKOBXNI6JuzZtKFzHPl9Iq4+Xc+QK4FLXsZ9s4FrpbV56AJe7jv24FxVqgpDWOcAhrmPP0/g+6kaC+9R17NU5zBewwJvTKwOWdZEXVehN06Wzms+OFNKaT7DAH4Qc1jmos/eNwCNZvKuv8Mv10PAc8AeCOyr/DNTL5J5YsozE+kqim+V9T3u7p0E92owoAxo0E1sTLEFZVQOD+DNyp3Kf6Tr2DDJ0Ds9hVmpdm5k7hbR2CkmQqEBfVssPNiXzKuAF+PRCFngMaeHnV3SWpvFQ7jlPjwAOdB37fK/fzHcdexuUX9ETQloTvLFT9/q/e5um74HOXkZ2XMd+D+WP1Br4XkhrX0313d/nsGRyjt//Tp42+CENZb3hCV+G7DikiLKf63C6F0JaI0Kq78kayviwXiQnIP7tbJKJ9VASLYR22ZTQzmDIXpgQ0ioJeFowMw2H28dz9Kx35TjKUqZahtc0PtvUTQmxcsxH6FP53VckY2SfIlqADf5+E3WTYO0npNUp4MZ8a5QtsQB6+0WIcx37blSW+M2BSiGtg71rWwppOcANwJGuYx9Td150HbvKdeyewEvA+0Ja52p4HaN8PnuAELTfXoI5HbkhjP9E9mPhW+DIIqnrOIIlkv3fuu9lqyeHh2ydUSaOQRnv92FsxldECitB/Z5mNBmCaiZaEyzr8Zw0fvM8yo5XJzFUzGQytVfMgC2FtNpmMFl+CUzV2I5ThLT65WiyLBHSmkjw8HCbWLkpnGYRLGqrUBGeDMXLkz721H8OMB72RNl0VwLdXcde2ED/We469naoiE3jPNOnKSj/rM6uY7/eSP87DqXhuF9Ia3SAOm+JispSmykhJH+rHVRDhwlrLyGtR02Xzno+e5PUQUgKDV0mbS/muJ6nZWnlURdfrX98wUIi0VaF1C6LgBPMaDIEESYGopIpkavMll5oxec0P+cjrmNvSON3MwOewHXL8JrrNT5jH2C2kNahmgWJ7T0ha5jGYu8vsgX4HdQpsqE4udcnkduoLMfDH1Aauo+AzV3Hrk6zD53h2W/fAmznOvZAz9E0nWuv9eo7UkjrX2QfL56QtRJ1n+MjlKYlKKcLaZ1qunXW7XAR8HkRVFWX0HiIkNYYcnPQ1hL4mw5Bwlewr6khsXw5kfJWhdY2L6CSbBoMWQkTh2pPyBJOlKLRGfh0BGHzTLMuAw56TQreEtJ62stYGmSSbCWkdSMqMs0A9MZtvoviW4CvRq9pmiG8ttvgk1uik5DWnzMcE0eioja96zr2MD/75gauvREVIexGYJ6Q1tQMn+Em4DLgQiGttzKs9+bA2dQPQfl8HprjZPRonp8Q0hpienfW7E9wp/hcj9tJntCug4uFtHKhkRlPsKA0m7jZ78PYN7OIz5lLpF1BBhS6GJXZ2mDIWJjYNuD9vk5zEplKeiZR6TDVs5tOh6UB75VNDPtcOIj9CZgrpHWHkNYuGW48hghpjfIcQ0floG7XhGBakStOzEAgNhQWozNIYOk3Lo4GXgU+9vJCbPo8KqR1qpdZuqFoT6OAC1zHvgrYC9hFSGuBt9FPdd2pQlq715oX/+kJFIcKaT2TwbPfTf3cQPfWSsoX5gaxBtClVXjbyzZuyLwd1gIHFkFV/6axrAt0hhgW0noC5VMXlO9dx57o90V8nkOiaiWUlRVq+xyBHt+WQqbSzBj6hYmOAe71CyoZTbrcoukZb83gtwsJ5my7dxaT+tvANzlo23LgIs85+xMhrduFtM4R0tpRSGu7On+nC2ndJKT1HjADdXraPQd1qkaFlyvWBbgKveZehvDa7hvq22B3FNK6Jo1NwzBU9DXHZ4xPBJ5IlchTSOsW78DgZM8hG9exf0aZJfYCfhTSSmXD8BDwiefsXVuguAU4OR0fCiGtwfjbN9+Xx7YYC7ytoaju5Ee70pQS2p1f4HWcjD7tBF6I4Q88891shYiBQlofaxSKUx4o1kz9jAJPnrwapeVqyrQ2s4VGYcJL9NQvoPSdSSr154ENAZ9vcYaOvt8GTFzXlexD9uWS3YFLUTbS01Dhd2v/PQr8Fdgvx/U42juZLOYF2EFPng1D+Fzh89m1QlrdG4naNBEV0nor17HjtYISPAMMBc52HXu5z7WjvXue7jr2cz5RpgagfNBmpwjesL03B04X0mpX69orUX5lI4W0Lm7kmf18FC5N118jh5yja04R0hppunbW89m9wLMFXs0z0B+hb7qQ1rNCWgdlsAfaT0jrEW+fsIemuvzgOrZvFKdkdTXV4ycQrehU6N1oRo4sLCiQXGwzUAfNQf/ewSStA1SG1iAJb9xMT4GFtF4lWNSABzP8/QaU9mRwSLkmNj3rIiGt62kgqV4T4HVPC9MUFuD7hbR2Rd/JlCGk0JiemcPFPlFjdkiRV+VTfs2XUF0neMLJwJWuYz/sc+3VwEjg+k35I3zqM9eLwDYPZXu8fZ3vZwlp7YiKHLWkdvAL17FPFtIaAIwR0vrOdey3fOpwLSpoRm2Wu449pgDaYpGQ1p+AZzQUN1pI679ehDxD5m3xJy9X0cACrd9cz1TwAs1FnwSc5CXz+9Db8NU12WmLSii5N7AVuTGd9SX+7XfE535PSadOxdCN7kGFjD2+iQ2PCPqsNKIYzQQAXQLe6/ssrrmWYCEJH8xw0koAswLcs1u2+R5cx74GeLeJ9rO1wClNbAE+Lcs+bchvu13io/HcXkjr/roBCIDPUHlVTnAde5ZPsre/uY59i88m/lxUONe7vHHdmKbrMGA7Ia13fL6fhUoUdS/+GscNXrbtberUYUfA794nFFBbPAtM0FTc+w2Yixka58ACH7cXepv9XNAHFd71alSEotp/NwDn5kiQeMHzD/WlZvLHJDaughZlxdKHTvAORgxkF820uQgTvQLea3oWE8gcYHaW93vOdewlWVwXJAt2KyBIhJHjCe4EXogc4Dr2mib4XEPN/FiU+OU7OFdIq7bAWwFsDTzmOvYLPnPTeNexb06RZfp+YJK3AUrXb+oq4HdCWjf7fP8f17Ev9fk8Bhzu/XNIrTp0xT/z93N+yfXIf1ADHXRARdoyZLdZ/7FWXypUftfENpanN/SD6gkfEilpAclkMT3XAQFNxQ3NQJjYPeC9lgeIEZ8NDwRwKApCpwAT+krqJ5Yqdo5xHfuzJroALwF+b6aRokzc9YjPV08Jae23Kdkc0MnLD0GaNtUCddK+xnXsvTOs040oP7ErhbTOzOC6Cd6c80It06z3gPbU9x87uQDbYhkqUIQODhXSusr08EDj4o4Crt8clGlhU+Bg17HXp/oyNm06G18dS7R772J7rvnoSU5paMLCxC4B75Xtift9wPoMr/nGdexPsrzfTPIkTHgTpq3hXRcKVxZLpusA7fUWTdvXpam221n4h59+b5PJkOvYmYY8/ND7715Z1mlT6OGHa0dwSuO6Fa5jx7wwqVNQGhXdOYJy2RZ3Al9pKu56Ia19TA8PZAb4bgHX7zmUFq+YOcF17C8a+sHGsa+SpAbKSovx+V5DRYQ0GGECfOyH+xLMZv6HLCePBJlHm7gxZN+O2mynYcL8HGVHnSzivvV3P3vyJroA3wCMM9NJ0bEv4Jdr4QshrUOyiDk/CJVLIsjGeGd+9QEoyyTJJOogZJsUm5evKHx7a12MF9IqN907aw4juIY+l/Ptjfj7AxUDp/qZTdYmuWoVVQ89RrRjd0gkirUPXQV8YoaSESbwyewcJMfE516SnGx5hMwcr18KcK+g2Vn30DRhvk2WJ5wFwLmuY/+jmY2lI4CVZkopKiHwZ/z9XlqgEqKdmOZG/igvstenm3JJBKzTOV5kuBfSvH8fVMSnQT5f/6OxzUuhRNpCn4lNS5puMIuwEgsWukP29cBNRbguPtXYj6rue5jYisVEOnQo9q50MOog2WCEif+xAyFkvm5g4vgMWJTmz+/xtBnZEjSbY3/PblnHhPkx6qRxTpH0p43A713HfpDmtwDHyH2eDoP+dvsCFS3Jj+eEtNJJsngavzof6qjTQ6jAE0enIUj8EZX0UqYQJP5eZCY2P2sqbqiQ1nWmhwfSjp9X4HUcRXH4UNR4OZYaXRcTy1ew/p//orRjd4jHaQJRHA8xo8kIE5sWq/IUqnNCipC0iX+m+bubNERZ+D5g7o4eGidM23v/DxV4XxoHDPCLd9+MFuAZmNwTxdhu/yG10+ClQloThLQaOlA5G+jXkENlFuyIyu3T0Nx8N0oL63d4cUMxCRLkxrfjaiGtP5genvW4uA94ucDr+Jy3Pk4r0Cp+DGzrOvar6fx4w2NPEF/xE5H2HZpKN/qYppvQzpChZqIdKuxeEHSYfzyQRsixiVmGg63roxF0YtpC96m369jnoELH/lBgfWg5cJ7r2Ie6jr0QswA/VQSCn6F+u70MDMNfLb8/yo9iVKqoXl6+CJ31We869rwUQsQhQlqzgPNTXH6V69hXF7FA/oTGIl8S0uppenjW7XEswYOS5LqOtuvYO3s5IWoKzG9wT9ex0wpvn1iyhPW33UG0Q1dIJppSN7oHFanO0MyFiUFknxEaTRGScB17A/BGIz+7XtN7+S7g9UPIzaT5ouvYEhU9KFYA/ecuQHonWIZf2+kc4AvzJoqu3T5CJaf6NsVPbhTSmuuZFoWOkNaOQlrPAm+nSKKVAP7oOagWM2cDv2hc4yaY3k3Q/A6JIhi/VwMDgKfzXJUnAStTv8Gq+x4mtnQRJZ02Tze3RKmG7M6EmE9mYcgRSKnlA1cIlBVAOS3yKUwMRznSBGEW+javqVjqOvb7mu5THfD6XUOIHtTfEypmhzwgfgRuA4a4jn1hiMnogmZg75kH57Mqwtdw9Qt4z/aa55fNCO5MG+aGZDHKbOLfKX6yJeq0+0MhrdN1+Uc1IkQMFdJ6FKUxPSnFz74BBruOPVZz+wXVSldk6QB8isbnGCikNVlIq02qV0zwDMqZEjSBQNuQ8+noMD9rH0Jd57uO/WdgJ+AxYElIr2k98Bywh+vYp3mZ69Mm8fMvVD36BKXtupCMpa1cCRqxLOy4s3tnEea/LtFCHiuN0EZTOW0DXpsTITKdzvQCMAPYQPbRkVZqmigmCmmdnaJRJmt8Ly8H7PSzCGHSRKl1b/BOSg9AJVDrkYPbVaJOQ98AnnUdOx8ha59DJcQhH0EAsknGJaS1O8GcsrPpR2cEXLQ/Qq9D/nkBBYJFhH/CmQBOEtIaB4xBRbPzWxj3Bm4T0noY5TM02XXsuCYBYjAqos7vaTyR5a2uY4/MwavYoKH9vs6yDSYIaZ2laSMQAbp6z1Hp8/3TBPOTy8b09DrUgVC2TA15TLwjpHVyQMFrcsiBFc4Q0mrpCeCHocwVdTojrEP5BLwF/Nt17KVZD7Rnnye26HvKpAXxtI0OrgBuDVD/bwk/od2WBDMDz+bwdE8KQzuxXmNI81ZZXhtLEQ49+CSbTBZzKgNDnQ1IKUrNe6i3ie3mCRedM5wgHVRUlc89AWKO69irzBs2NMMx1dETKNJxrP8JmAS8jjKVXOBleG7sHhWoaEzdgMO9Tc9WpGc+OsIzzzIYDI2Psz7eZmw/oLsnZG6G8g1tiMUo/8BFKC3ga8DsLBJb+lJ1xz2suWQEpb0HmoYyFCSd5s82wkQzn0BboMw2OtKwycEGVJby+bomSIOhCY2jXYF/eBt9MtDM2Khw0+tS2L52RSUE3SxDbc3VrmM/blrGYAg8ttvx28hp0Vo5qwDWp+tEnbUwcff9rLlguBEmDEUrTJSaV0RTdyqtBqabN2EwBBpHU4EDhLT2AS5DmU2Qhr/HDhqrMQsVKexeL6+JwWAIPrbXmDXSYKCoHHAMBoOhmDceHwIfCmlticpNcQbBnd5pRLsxFnjCdWyT1dlgMBgMRpgwGAyGJiBUfA/cDNwspLUncBAqgsy+BI9ANRN4H+UM/3HQ3DkGg8FgMBhhwmAwGApXsJiMF6lGSKsLKjdPH2BrVEjirvwaGrMdKrHWL7UCHqxAhX39AfjOE1QMBoPBYCgKjAO2wWAwGAwGg8FgIKxsggaDwWAwGAwGg8FghAmDwWAwGAwGg8FghAmDwWAwGAwGg8FghAmDwWAwGAwGg8FghAmDwWAwGAwGg8HQJPl/Jpl4esyPuVEAAAAASUVORK5CYII=";
+document.documentElement.style.setProperty("--logo-w",`url(${LOGO_W})`);
+const BLOB=window.RN.blob;window.RN_LOGO_D=LOGO_D;window.toastRN=t=>toast(t);
+const PRIKLJ=["Napajanje (+/−)","Kontakt brava (paljenje)","CAN bus","Sonda goriva","Tahograf","Identifikacija vozača","Kamera","Taster za alarm"];
+const TIP={
+ ugradnja:{n:"Ugradnja opreme",s:"Nov uređaj na vozilu",c:"--t-ugr",p:[
+]},
+ demontaza:{n:"Demontaža opreme",s:"Skidanje uređaja",c:"--t-dem",p:[
+  {k:"razlog",l:"Razlog demontaže",t:"sel",o:["Prodaja vozila","Raskid ugovora","Kvar uređaja","Zamena vozila","Drugo"],r:1},
+  {k:"stanje",l:"Stanje skinute opreme",t:"sel",o:["Ispravna","Neispravna","Oštećena"]}]},
+ servis:{n:"Servis / intervencija",s:"Kvar, provera, zamena",c:"--t-srv",p:[
+  {k:"kvar",l:"Prijavljeni problem",t:"txt",r:1},{k:"uzrok",l:"Utvrđeni uzrok",t:"txt"},{k:"radovi",l:"Izvršeni radovi",t:"txt",r:1},
+  {k:"ishod",l:"Ishod",t:"sel",o:["Rešeno","Delimično rešeno","Nije rešeno – potrebna nova intervencija"],r:1}]},
+ premestanje:{n:"Premeštanje opreme",s:"Sa vozila na vozilo",c:"--t-pre",p:[
+  {k:"saVozila",l:"Sa vozila (reg. oznaka)",m:1,r:1},{k:"naVozilo",l:"Na vozilo (reg. oznaka)",m:1,r:1}]},
+ ostalo:{n:"Ostali radovi",s:"Sve što ne spada gore",c:"--t-ost",p:[
+  {k:"vrsta",l:"Vrsta posla",r:1},{k:"opis",l:"Opis izvršenog posla",t:"txt",r:1}]}
+};
+
+/* ---------- state ---------- */
+let db=null,assets=null,downloads=null,user=null,canEdit=false,roleKnown=false,preview=false;
+const SCANICO='<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M3 7V4h3M21 7V4h-3M3 17v3h3M21 17v3h-3M7 8v8M10 8v8M13 8v8M17 8v8" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg>';
+const VID=[["klLogo","Logo klijenta",1],["gpsModel","Model GPS uređaja",1],["imei","IMEI",1],["gpsStanje","Stanje GPS uređaja (nov / polovan)",0],["iccid","ICCID (SIM1 i SIM2)",0],["operater","Mobilni operateri",0],
+ ["dxVrsta","Dodatna oprema: vrsta i model",1],["dxStanje","Dodatna oprema: stanje (nova / polovna)",0],["dxSn","Dodatna oprema: serijski broj",0],
+ ["vin","VIN vozila",1],["km","Kilometraža / radni sati",1],["detalji","Podaci o intervenciji (razlog, opis radova…)",1],
+ ["lokacija","Lokacija rada (koordinate)",1],["serviser","Ime servisera",1],["vreme","Radno vreme i trajanje",1],["pauze","Pauze",0],["napomena","Napomena",1],["foto","Fotografije",1]];
+const vidOn=k=>{const v=(firma.vidljivo||{})[k];return v===undefined?!!(VID.find(x=>x[0]===k)||[])[2]:!!v};
+let dView="klijent";
+const PRAVA=[["nalogNovi","Pravi nove radne naloge"],["pdf","Preuzima PDF naloga"],["brisanje","Briše naloge"],["izvoz","Izvozi naloge u Excel (CSV)"],["klijentiVidi","Vidi karticu Klijenti"],["klijentiMenja","Dodaje i menja klijente"],["pdfInterni","Vidi interni nalog (sve tehničke podatke)"],["izmena","Menja zatvorene naloge"]];
+const VIDI={ne:"Ne vidi arhivu",svoje:"Samo svoje naloge",sve:"Sve naloge"};
+const DANI=[[1,"1 dan"],[3,"3 dana"],[7,"7 dana"],[14,"14 dana"],[30,"30 dana"],[60,"60 dana"],[90,"90 dana"],[365,"godinu dana"],[0,"bez ograničenja"]];
+const DEF_ULOGE={def:"serviser",lista:[
+ {id:"serviser",naziv:"Serviser",vidi:"sve",dana:30,prava:{nalogNovi:1,pdf:1}},
+ {id:"korisnik",naziv:"Korisnik",vidi:"sve",dana:30,prava:{pdf:1}},
+ {id:"finansije",naziv:"Finansije",vidi:"sve",dana:0,prava:{pdf:1,izvoz:1,klijentiVidi:1}},
+ {id:"prodaja",naziv:"Prodaja",vidi:"sve",dana:90,prava:{pdf:1,klijentiVidi:1,klijentiMenja:1}}]};
+let uloge=DEF_ULOGE,clanovi={},myId=null;
+const isAdmin=()=>canEdit&&!preview;
+function curRole(){const L=uloge.lista||[];const id=preview||clanovi[myId]||uloge.def;return L.find(r=>r.id===id)||L.find(r=>r.id===uloge.def)||L[0]||{naziv:"",vidi:"ne",dana:0,prava:{}}}
+const can=k=>isAdmin()||!!(curRole().prava||{})[k];
+const daniTxt=d=>d===1?"od poslednjeg dana":`iz poslednjih ${d} dana`;
+function vis(){if(isAdmin())return nalozi;const r=curRole();if(r.vidi==="ne")return[];let a=r.vidi==="svoje"?nalozi.filter(n=>myId&&n.createdBy===myId):nalozi;const d=+r.dana||0;if(d){const od=Date.now()-d*864e5;a=a.filter(n=>(n.createdAt||0)>=od)}return a}
+function applyRole(){
+  const adm=isAdmin(),r=curRole();
+  document.querySelectorAll("nav a[data-admin]").forEach(a=>a.hidden=!adm);
+  $("#navKl").hidden=!can("klijentiVidi");
+  $("#roleTag").hidden=!roleKnown;$("#roleTag").textContent=adm?"ADMIN":(r.naziv||"").toUpperCase();
+  $("#pvBar").hidden=!preview;$("#pvTxt").textContent=`Pregled uloge „${r.naziv}”: ovako aplikaciju vide osobe sa ovom ulogom.`;
+  $("#csvBtn").hidden=!(can("izvoz")&&downloads);
+  $("#klForm").hidden=!(adm||can("klijentiMenja"));
+  let t="";if(roleKnown){if(adm)t="Vi vidite sve naloge.";else if(r.vidi==="ne")t=can("nalogNovi")?"Vaša uloga ne vidi arhivu. Novi nalog pravite dugmetom +.":"Vaša uloga ne vidi naloge.";else t=`Prikazani su ${r.vidi==="svoje"?"vaši nalozi":"nalozi"}${+r.dana?" "+daniTxt(+r.dana):""}.`}
+  $("#limitNote").hidden=!t;$("#limitNote").textContent=t;
+  klLogoRender();route(true);renderArchive();renderKlList();
+}
+let firma={};let nalozi=[];let loaded=false;
+let tip="ugradnja";let photos=[];let sigInk=false;let curId=null;let filt="sve";
+
+/* ---------- routing ---------- */
+let formOpen=false,chMode="new";
+function route(keep){
+  const h=(location.hash||"#nalozi").slice(1);
+  if(h==="novi"&&roleKnown&&!can("nalogNovi")&&!editId){history.replaceState(null,"","#nalozi");route(keep);return}
+  if(h==="novi"&&!formOpen){history.replaceState(null,"","#nalozi");route();openChooser("new");return}
+  let v=h.startsWith("n-")?"detalj":({novi:"novi",klijenti:"klijenti",podesavanja:"podesavanja",uloge:"uloge"}[h]||"arhiva");
+  if(((v==="podesavanja"||v==="uloge")&&!isAdmin())||(v==="klijenti"&&!can("klijentiVidi"))){if(roleKnown){history.replaceState(null,"","#nalozi")}v="arhiva"}
+  ["novi","arhiva","detalj","klijenti","podesavanja","uloge"].forEach(x=>$("#v-"+x).hidden=x!==v);
+  const nv=v==="detalj"||v==="novi"?"arhiva":v;
+  document.querySelectorAll("nav a").forEach(a=>{if(a.dataset.v===nv)a.setAttribute("aria-current","page");else a.removeAttribute("aria-current")});
+  $("#fab").hidden=v!=="arhiva"||!roleKnown||!can("nalogNovi");
+  if(v==="uloge")renderUloge();
+  if(v==="detalj"){curId=h.slice(2);renderDetail()}
+  if(v==="podesavanja")fillSettings();
+  if(v==="arhiva")renderDraftNote();
+  if(v==="novi"){renderBanner();if(!sigInk&&!keep)setTimeout(sigSize,0)}
+  if(!keep)window.scrollTo(0,0);
+}
+addEventListener("hashchange",()=>route());
+
+/* ---------- chooser (+) ---------- */
+const dirty=()=>!!(timer.start||val("k_naziv")||val("v_reg")||val("napomena")||photos.length||sigInk);
+function openChooser(mode){
+  chMode=mode;renderTypes();
+  $("#chT").textContent=mode==="change"?"Promenite vrstu posla":"Koji posao radite?";
+  $("#chDraft").innerHTML=(mode==="new"&&formOpen&&dirty())?`<div class="draft"><span style="flex:1 1 200px">Imate započet nalog: <b>${TIP[tip].n}</b>${val("k_naziv")?" · "+esc(val("k_naziv")):""}. Izbor nove vrste ga odbacuje.</span><button class="btn sm pri" id="chCont">Nastavi započeti</button></div>`:"";
+  const c=$("#chCont");if(c)c.onclick=()=>{closeChooser();location.hash="#novi"};
+  $("#chooser").hidden=false;setTimeout(()=>$("#types .type")?.focus(),0);
+}
+function closeChooser(){$("#chooser").hidden=true}
+$("#fab").onclick=()=>openChooser("new");
+$("#chClose").onclick=closeChooser;
+$("#chooser").addEventListener("click",e=>{if(e.target.id==="chooser")closeChooser()});
+addEventListener("keydown",e=>{if(e.key!=="Escape")return;if(!$("#chooser").hidden)closeChooser();if(!$("#closeDlg").hidden)$("#closeDlg").hidden=true});
+function renderBanner(){const t=TIP[tip];const b=$("#tipBanner");b.style.setProperty("--c",`var(${t.c})`);
+  b.innerHTML=`<div><div class="tb-l">${editId?`Izmena naloga ${esc(editOrig.broj)} · vrsta posla`:"Vrsta posla"}</div><div class="tb-n">${t.n}</div></div><button type="button" class="btn sm" id="tbChg">Promeni vrstu</button>`;
+  $("#tbChg").onclick=()=>openChooser("change")}
+function renderDraftNote(){
+  $("#draftNote").innerHTML=(formOpen&&dirty())?`<div class="draft"><span style="flex:1 1 200px">Započet nalog: <b>${TIP[tip].n}</b>${val("k_naziv")?" · "+esc(val("k_naziv")):""}</span><a class="btn sm pri" href="#novi">Nastavi</a></div>`:"";
+}
+
+/* ---------- header ---------- */
+function renderBrand(){
+  $("#logoSlot").innerHTML=firma.logoId?`<img class="logo up" src="${BLOB}${esc(firma.logoId)}" alt="${esc(firma.naziv||"Logo")}">`:`<img class="logo" src="${LOGO_W}" alt="MonitoringNET">`;
+  $("#firmName").textContent=firma.naziv||"";$("#firmName").hidden=!firma.logoId||!firma.naziv;
+}
+
+/* ---------- type picker + fields ---------- */
+function renderTypes(){
+  $("#types").innerHTML=Object.entries(TIP).map(([k,t])=>`<button type="button" class="type" style="--c:var(${t.c})" data-k="${k}" aria-pressed="${chMode==="change"&&k===tip}"><b>${t.n}</b><span>${t.s}</span></button>`).join("");
+}
+$("#types").addEventListener("click",e=>{const b=e.target.closest(".type");if(!b)return;const k=b.dataset.k;
+  if(chMode==="change"){tip=k;renderTipFields();renderBanner();saveDraft()}
+  else{resetForm(k);clearDraft();formOpen=true;saveDraft()}
+  closeChooser();if(location.hash==="#novi")route();else location.hash="#novi"});
+function renderTipFields(){
+  const t=TIP[tip];$("#tipSec").hidden=!t.p.length;$("#tipTitle").textContent=t.n;$("#tipSec").style.borderTop=`4px solid var(${t.c})`;
+  $("#tipFields").innerHTML=t.p.map(p=>{
+    const id="d_"+p.k,lab=`<label class="l${p.r?" req":""}" for="${id}">${p.l}</label>`;
+    if(p.t==="sel")return `<div class="f">${lab}<select id="${id}" ${p.r?"data-req":""}><option value="">— izaberite —</option>${p.o.map(o=>`<option>${esc(o)}</option>`).join("")}</select></div>`;
+    if(p.t==="txt")return `<div class="f full">${lab}<textarea id="${id}" ${p.r?"data-req":""}></textarea></div>`;
+    if(p.t==="chk")return `<div class="f full"><span class="l">${p.l}</span><div class="checks" id="${id}">${p.o.map((o,i)=>`<label class="chk"><input type="checkbox" id="${id}_${i}" value="${esc(o)}">${esc(o)}</label>`).join("")}</div></div>`;
+    return `<div class="f">${lab}<input type="text" id="${id}" class="${p.m?"mono":""}" ${p.r?"data-req":""}></div>`;
+  }).join("");
+}
+
+/* ---------- dodatna oprema ---------- */
+function dxNum(){const L=[...$("#dxList").children];L.forEach((d,i)=>d.querySelector(".dop-h b").textContent=`Oprema ${i+1}`);
+  $("#dxCount").textContent=L.length?`${L.length} ${L.length===1?"stavka":"stavke"}`:"Nema dodatne opreme"}
+function addDx(v={},focus){
+  const d=document.createElement("div");d.className="dop";const i=Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+  d.innerHTML=`<div class="dop-h"><b></b><button type="button" class="xbtn" aria-label="Ukloni opremu">×</button></div>
+   <div class="grid">
+    <div class="f"><label class="l req" for="dx_v_${i}">Vrsta opreme</label><input type="text" id="dx_v_${i}" class="dx-v" list="dopList" placeholder="npr. RFID čitač" value="${esc(v.vrsta||"")}"></div>
+    <div class="f"><label class="l" for="dx_m_${i}">Model</label><input type="text" id="dx_m_${i}" class="dx-m" value="${esc(v.model||"")}"></div>
+    <div class="f"><span class="l req" id="dx_sl_${i}">Stanje</span><div class="seg dx-s" role="radiogroup" aria-labelledby="dx_sl_${i}"><label class="chk"><input type="radio" name="dx_s_${i}" id="dx_sn_${i}" value="Nov"${v.stanje==="Nov"?" checked":""}>Nov</label><label class="chk"><input type="radio" name="dx_s_${i}" id="dx_sp_${i}" value="Polovan"${v.stanje==="Polovan"?" checked":""}>Polovan</label></div></div>
+    <div class="f"><label class="l" for="dx_n_${i}">Serijski broj</label><div class="scan"><input type="text" id="dx_n_${i}" class="mono dx-n" autocomplete="off" value="${esc(v.sn||"")}"><label class="btn scan-b" title="Slikajte bar ili QR kod">${SCANICO}Skeniraj<input type="file" accept="image/*" capture="environment" data-scan="sn" hidden></label></div><small class="hint dx-h"></small></div>
+   </div>`;
+  d.querySelector(".xbtn").onclick=()=>{d.remove();dxNum();dSave()};$("#dxList").appendChild(d);dxNum();
+  if(focus){d.scrollIntoView({behavior:"smooth",block:"center"});setTimeout(()=>d.querySelector(".dx-v").focus(),250)}
+}
+$("#dxAdd").onclick=()=>{addDx({},true);dSave()};
+const dxData=()=>[...$("#dxList").children].map(d=>({vrsta:d.querySelector(".dx-v").value.trim(),model:d.querySelector(".dx-m").value.trim(),stanje:(d.querySelector(".dx-s input:checked")||{}).value||"",sn:d.querySelector(".dx-n").value.trim()}));
+
+/* ---------- km ---------- */
+
+
+/* ---------- photos ---------- */
+function renderPhotos(){
+  $("#photos").innerHTML=photos.map((p,i)=>`<div class="ph"><img src="${p.url}" alt="Fotografija ${i+1}"><button type="button" data-i="${i}" aria-label="Ukloni sliku">×</button></div>`).join("")+
+   `<label class="addph">+ Dodaj sliku<br>(kamera ili galerija)<input type="file" id="phIn" accept="image/*" multiple></label>`;
+  $("#phCount").textContent=photos.length+(photos.length===1?" slika":" slika");
+  $("#phIn").onchange=async e=>{for(const f of e.target.files){try{const b=await shrink(f,1600,.82);photos.push({blob:b,url:URL.createObjectURL(b)})}catch(err){toast("Slika nije mogla da se učita.")}}renderPhotos()};
+}
+$("#photos").addEventListener("click",e=>{const b=e.target.closest("button[data-i]");if(!b)return;const p=photos.splice(+b.dataset.i,1)[0];URL.revokeObjectURL(p.url);renderPhotos()});
+function shrink(file,max,q,type){return new Promise((res,rej)=>{const u=URL.createObjectURL(file);const im=new Image();im.onload=()=>{let w=im.naturalWidth,h=im.naturalHeight;const s=Math.min(1,max/Math.max(w,h));w=Math.round(w*s);h=Math.round(h*s);const c=document.createElement("canvas");c.width=w;c.height=h;c.getContext("2d").drawImage(im,0,0,w,h);URL.revokeObjectURL(u);c.toBlob(b=>b?res(b):rej(),type||"image/jpeg",q)};im.onerror=()=>{URL.revokeObjectURL(u);rej()};im.src=u})}
+
+/* ---------- signature ---------- */
+const cv=$("#sig");let cx,drawing=false,last=null;
+function sigSize(){const r=cv.getBoundingClientRect();if(!r.width)return;const d=window.devicePixelRatio||1;cv.width=r.width*d;cv.height=r.height*d;cx=cv.getContext("2d");cx.scale(d,d);cx.lineWidth=2.4;cx.lineCap="round";cx.lineJoin="round";cx.strokeStyle="#0b2a6b";sigInk=false;$("#sigHint").hidden=false}
+cv.addEventListener("pointerdown",e=>{if($("#nf").classList.contains("locked"))return;if(editSig){editSig=null;$("#sigOld").hidden=true}if(!cx)sigSize();drawing=true;cv.setPointerCapture(e.pointerId);const r=cv.getBoundingClientRect();last=[e.clientX-r.left,e.clientY-r.top];cx.beginPath();cx.arc(last[0],last[1],1.1,0,7);cx.fillStyle="#0b2a6b";cx.fill();sigInk=true;$("#sigHint").hidden=true});
+cv.addEventListener("pointermove",e=>{if(!drawing)return;const r=cv.getBoundingClientRect();const p=[e.clientX-r.left,e.clientY-r.top];cx.beginPath();cx.moveTo(last[0],last[1]);cx.lineTo(p[0],p[1]);cx.stroke();last=p});
+["pointerup","pointercancel","pointerleave"].forEach(t=>cv.addEventListener(t,()=>drawing=false));
+$("#sigClr").onclick=sigSize;
+let rsT;addEventListener("resize",()=>{clearTimeout(rsT);rsT=setTimeout(()=>{if(!sigInk)sigSize()},200)});
+
+/* ---------- radno vreme ---------- */
+let timer={start:null,stop:null,pauze:[],pausedAt:null},tmInt=null;
+const pad=n=>String(n).padStart(2,"0");
+const fmtT=ms=>ms?new Date(ms).toLocaleTimeString("sr-RS",{hour:"2-digit",minute:"2-digit"}):"";
+const fmtDur=m=>{m=+m||0;const h=Math.floor(m/60);return h?`${h} h ${m%60} min`:`${m} min`};
+const pauzeMs=(now)=>(timer.pauze||[]).reduce((a,p)=>a+(p.do-p.od),0)+(timer.pausedAt?((now||Date.now())-timer.pausedAt):0);
+const radMs=()=>{if(!timer.start)return 0;const end=timer.stop||Date.now();return Math.max(0,end-timer.start-pauzeMs(end))};
+function renderTimer(){
+  const {start,stop,pausedAt}=timer,run=start&&!stop&&!pausedAt,pz=start&&!stop&&pausedAt;
+  const sec=Math.floor(radMs()/1000),pm=Math.round(pauzeMs(stop||Date.now())/60000);
+  $("#tmClock").textContent=`${pad(Math.floor(sec/3600))}:${pad(Math.floor(sec/60)%60)}:${pad(sec%60)}`;
+  $("#timerSec").className="sec timer"+(run?" run":pz?" pause":stop?" done":"");
+  $("#tmStart").hidden=!!start;$("#tmPause").hidden=!run;$("#tmResume").hidden=!pz;$("#tmStop").hidden=!(run||pz);
+  const pzTxt=pm?` · pauze ${fmtDur(pm)}`:"";
+  $("#tmInfo").textContent=!start?"Pritisnite Start kada počnete posao.":pz?`Pauza od ${fmtT(pausedAt)}. Pritisnite Nastavi kada se vratite na posao.`:run?`Posao traje od ${fmtT(start)}${pzTxt}.`:`Početak ${fmtT(start)} · Kraj ${fmtT(stop)} · Rad ${fmtDur(Math.round(radMs()/60000))}${pzTxt} · Nalog je zatvoren.`;
+  clearInterval(tmInt);if(run||pz)tmInt=setInterval(renderTimer,1000);
+}
+$("#tmStart").onclick=()=>{timer={start:Date.now(),stop:null,pauze:[],pausedAt:null,nid:null};$("#r_datum").value=new Date().toLocaleDateString("sv-SE");renderTimer();saveDraft();toast("Radno vreme je pokrenuto.")};
+$("#tmPause").onclick=()=>{timer.pausedAt=Date.now();renderTimer();saveDraft();toast("Pauza. Vreme rada je zaustavljeno.")};
+$("#tmResume").onclick=()=>{timer.pauze=[...(timer.pauze||[]),{od:timer.pausedAt,do:Date.now()}];timer.pausedAt=null;renderTimer();saveDraft();toast("Rad je nastavljen.")};
+$("#tmStop").onclick=()=>$("#nf").requestSubmit?$("#nf").requestSubmit():$("#fSave").click();
+function lockForm(on){$("#nf").classList.toggle("locked",on);
+  document.querySelectorAll("#nf input,#nf select,#nf textarea,#nf button").forEach(el=>{if(el.closest("#timerSec")||el.id==="fSave"||el.id==="fReset")return;el.disabled=on});
+  $("#tbChg")&&($("#tbChg").disabled=on)}
+function openClose(){
+  const now=Date.now(),pm=Math.round(pauzeMs(now)/60000),rm=Math.round(Math.max(0,now-timer.start-pauzeMs(now))/60000);
+  $("#cdInfo").textContent=`Početak ${fmtT(timer.start)} · Kraj ${fmtT(now)} · Rad ${fmtDur(rm)}${pm?` · pauze ${fmtDur(pm)}`:""}`;
+  $("#closeDlg").hidden=false;setTimeout(()=>$("#cdNo").focus(),0)}
+$("#cdNo").onclick=()=>{$("#closeDlg").hidden=true};
+$("#closeDlg").addEventListener("click",e=>{if(e.target.id==="closeDlg")$("#closeDlg").hidden=true});
+$("#cdYes").onclick=()=>{$("#closeDlg").hidden=true;const now=Date.now();
+  if(timer.pausedAt){timer.pauze=[...(timer.pauze||[]),{od:timer.pausedAt,do:now}];timer.pausedAt=null}
+  timer.stop=now;renderTimer();lockForm(true);saveDraft();doSave()};
+document.addEventListener("visibilitychange",()=>{if(!document.hidden)renderTimer()});
+
+/* ---------- IMEI / ICCID ---------- */
+const luhn=v=>{let s=0;for(let i=0;i<v.length;i++){let d=+v[v.length-1-i];if(i%2){d*=2;if(d>9)d-=9}s+=d}return s%10===0};
+function chkCode(k){const v=val("u_"+k).toUpperCase();if(!v)return k==="iccid2"?"":k==="imei"?"Unesite IMEI uređaja.":"Unesite ICCID SIM1 kartice.";
+  if(k==="imei"){if(!/^\d{15}$/.test(v))return "IMEI mora imati tačno 15 cifara.";if(!luhn(v))return "IMEI nije ispravan: kontrolna cifra se ne slaže. Proverite broj.";return ""}
+  if(!/^89\d{16,20}F?$/.test(v))return `ICCID ${k==="iccid2"?"SIM2":"SIM1"} mora početi sa 89 i imati 18 do 22 cifre.`;
+  if(k==="iccid2"&&v===val("u_iccid").toUpperCase())return "ICCID SIM2 je isti kao SIM1. Proverite brojeve.";return ""}
+function hintCode(k){const h=$("#h_"+k),v=val("u_"+k);if(!v){h.textContent="";h.className="hint";return}
+  const e=chkCode(k);h.textContent=e||"Broj je ispravan.";h.className="hint "+(e?"err":"ok");$("#u_"+k).classList.toggle("invalid",!!e)}
+["imei","iccid","iccid2"].forEach(k=>$("#u_"+k).addEventListener("input",e=>{e.target.value=e.target.value.replace(k==="imei"?/\D/g:/[^0-9Ff]/g,"");hintCode(k)}));
+function pickCode(vals,k){
+  for(const raw of vals){const t=String(raw).replace(/\s+/g,"");
+    if(k==="imei"){for(const m of t.match(/\d{15,}/g)||[]){if(m.length===15&&luhn(m))return m;if(m.length===16&&luhn(m.slice(0,15)))return m.slice(0,15)}
+      const m15=(t.match(/\d{15}/g)||[])[0];if(m15)return m15}
+    else{const m=t.match(/89\d{16,20}F?/i);if(m)return m[0].toUpperCase()}}
+  return ""}
+async function decodeImage(file){
+  const img=await shrink(file,1800,.92).catch(()=>file);let vals=[];
+  if("BarcodeDetector" in window){try{const bmp=await createImageBitmap(img);vals=(await new BarcodeDetector().detect(bmp)).map(c=>c.rawValue)}catch(e){}}
+  if(!vals.length&&window.ZXing){const u=URL.createObjectURL(img);try{const hints=new Map();hints.set(ZXing.DecodeHintType.TRY_HARDER,true);const res=await new ZXing.BrowserMultiFormatReader(hints).decodeFromImageUrl(u);vals=[res.getText()]}catch(e){}finally{URL.revokeObjectURL(u)}}
+  return vals}
+function scanResult(k,inputEl,vals){
+  if(k==="sn"){const box=inputEl.closest(".f"),h=box.querySelector(".dx-h"),inp=box.querySelector(".dx-n");if(vals.length){inp.value=String(vals[0]).trim().slice(0,60);h.className="hint dx-h ok";h.textContent="Serijski broj je očitan. Proverite da je tačan.";saveDraft()}
+    else{h.className="hint dx-h err";h.textContent="Kod nije prepoznat. Pokušajte ponovo ili upišite broj ručno."}return}
+  const h=$("#h_"+k);const code=pickCode(vals,k);
+  if(code){$("#u_"+k).value=code;hintCode(k);saveDraft();toast(`${k==="imei"?"IMEI":k==="iccid2"?"ICCID SIM2":"ICCID SIM1"} očitan: ${code}`)}
+  else if(vals.length){h.className="hint err";h.textContent=`Očitan je kod „${String(vals[0]).slice(0,40)}”, ali to nije ${k==="imei"?"IMEI":"ICCID"}. Slikajte samo traženi kod ili upišite broj ručno.`}
+  else{h.className="hint err";h.textContent="Kod nije prepoznat. Pokušajte ponovo (oštro, bez odsjaja) ili upišite broj ručno."}
+}
+document.addEventListener("change",async e=>{if(!e.target.matches||!e.target.matches("input[data-scan]"))return;
+  const f=e.target.files[0],k=e.target.dataset.scan,el=e.target;el.value="";if(!f)return;
+  scanResult(k,el,await decodeImage(f))});
+// Dugme „Skeniraj": prvo kamera uživo (Android aplikacija ili pregledač), a ako nije dostupna – slikanje
+document.addEventListener("click",async e=>{const lb=e.target.closest&&e.target.closest("label.scan-b");if(!lb||e.target.matches("input"))return;
+  const inp=lb.querySelector("input[data-scan]");if(!inp||inp.disabled)return;e.preventDefault();
+  let vals;try{vals=await RNNative.scan()}catch(err){toast(err.message||"Skener nije dostupan.");return}
+  if(vals===undefined){inp.click();return}if(vals===null)return;
+  scanResult(inp.dataset.scan,inp,vals)});
+
+/* ---------- lokacija rada ---------- */
+let geo=null,gMap=null,gMark=null,gCirc=null;
+function renderGeo(){
+  $("#geoStat").textContent=geo?(geo.rucno?"Ručno ispravljena":`Tačnost ±${geo.acc} m`):"Nije očitana";
+  $("#geoBtn").textContent=geo?"Očitaj ponovo":"Očitaj trenutnu lokaciju";
+  if(geo)$("#geoTxt").textContent=`${geo.lat.toFixed(6)}, ${geo.lng.toFixed(6)}`;
+  $("#geoMap").hidden=!geo;if(!geo||!window.L)return;
+  if(!gMap){L.Icon.Default.imagePath="vendor/images/";gMap=L.map("geoMap");L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:"© OpenStreetMap"}).addTo(gMap)}
+  const ll=[geo.lat,geo.lng];
+  if(!gMark){gMark=L.marker(ll,{draggable:true}).addTo(gMap);gMark.on("dragend",()=>{const p=gMark.getLatLng();geo={...geo,lat:p.lat,lng:p.lng,rucno:true};if(gCirc)gCirc.remove(),gCirc=null;renderGeo();saveDraft()})}else gMark.setLatLng(ll);
+  if(gCirc){gCirc.remove();gCirc=null}if(!geo.rucno&&geo.acc)gCirc=L.circle(ll,{radius:geo.acc,weight:1,fillOpacity:.1}).addTo(gMap);
+  setTimeout(()=>{gMap.invalidateSize();gMap.setView(ll,Math.max(gMap.getZoom()||0,16))},50)}
+$("#geoBtn").onclick=async()=>{const b=$("#geoBtn");b.disabled=true;b.textContent="Očitavam…";
+  try{geo=await RNNative.locate();renderGeo();saveDraft();toast("Lokacija je očitana.")}catch(e){toast(e.message||"Lokacija nije očitana.");renderGeo()}finally{b.disabled=false}};
+
+/* ---------- nedovršen nalog (čuva se na uređaju) ---------- */
+const DKEY="rn_draft";let pendingK=null,dT=null;
+function saveDraft(){if(!formOpen||editId)return;const f={};
+  document.querySelectorAll("#nf input[id],#nf select[id],#nf textarea[id]").forEach(el=>{if(el.type==="file"||el.id==="k_find"||/^dx_/.test(el.id))return;f[el.id]=(el.type==="checkbox"||el.type==="radio")?el.checked:el.value});
+  ls.set(DKEY,JSON.stringify({tip,f,dx:dxData(),timer,geo,t:Date.now()}))}
+const dSave=()=>{clearTimeout(dT);dT=setTimeout(saveDraft,400)};
+$("#nf").addEventListener("change",e=>{if(e.target.type==="radio"){const g=e.target.closest(".seg");if(g)g.classList.remove("invalid-g")}});
+$("#nf").addEventListener("input",dSave);$("#nf").addEventListener("change",dSave);$("#nf").addEventListener("click",e=>{if(e.target.closest(".xbtn"))dSave()});
+function clearDraft(){try{localStorage.removeItem(DKEY)}catch(e){}}
+function restoreDraft(){let d=null;try{d=JSON.parse(ls.get(DKEY)||"null")}catch(e){}if(!d||!d.f)return;
+  resetForm(d.tip&&TIP[d.tip]?d.tip:"ugradnja");
+  $("#dxList").innerHTML="";(d.dx||[]).forEach(v=>addDx(v));dxNum();
+  Object.entries(d.f).forEach(([id,v])=>{const el=document.getElementById(id);if(!el||id==="k_sel"||id==="v_sel")return;if(el.type==="checkbox"||el.type==="radio")el.checked=!!v;else el.value=v});
+  pendingK=d.f.k_sel?{k:d.f.k_sel,v:d.f.v_sel}:null;geo=d.geo||null;renderGeo();
+  timer=Object.assign({start:null,stop:null,pauze:[],pausedAt:null},d.timer||{});renderTimer();if(timer.stop){lockForm(true);$("#fSave").textContent="Sačuvaj zatvoren nalog";$("#fMsg").textContent="Ovaj nalog je zatvoren, ali još nije sačuvan. Pritisnite „Sačuvaj zatvoren nalog”."}["imei","iccid","iccid2"].forEach(hintCode);formOpen=true}
+
+/* ---------- form reset ---------- */
+let editId=null,editOrig=null,editSig=null;
+function resetForm(t){
+  geo=null;if(typeof renderGeo==="function")renderGeo();
+  editId=null;editOrig=null;editSig=null;$("#sigOld").hidden=true;$("#timerSec").hidden=false;$("#editTimes").hidden=true;$("#fReset").textContent="Odbaci nalog";
+  $("#nf").reset();tip=t||"ugradnja";$("#k_find").value="";renderKlSelect();renderTipFields();renderBanner();
+  $("#k_sel").value="";onKlSel();
+  $("#dxList").innerHTML="";dxNum();$("#u_stanje").classList.remove("invalid-g");
+  photos.forEach(p=>URL.revokeObjectURL(p.url));photos=[];renderPhotos();
+  $("#r_datum").value=new Date().toLocaleDateString("sv-SE");
+  $("#r_serviser").value=ls.get("rn_serviser")||"";
+  timer={start:null,stop:null,pauze:[],pausedAt:null};renderTimer();lockForm(false);$("#fSave").textContent="Stop i zatvori nalog";["imei","iccid","iccid2"].forEach(k=>{$("#h_"+k).textContent="";$("#h_"+k).className="hint"});
+  sigSize();$("#fMsg").textContent="";
+  document.querySelectorAll(".invalid").forEach(x=>x.classList.remove("invalid"));
+}
+let resetArm=false;
+$("#fReset").onclick=e=>{if(editId){const id=editId;resetForm();formOpen=false;location.hash="#n-"+id;return}if(!resetArm){resetArm=true;e.target.textContent="Potvrdi odbacivanje";setTimeout(()=>{resetArm=false;e.target.textContent="Odbaci nalog"},3000);return}resetArm=false;e.target.textContent="Odbaci nalog";resetForm();formOpen=false;clearDraft();location.hash="#nalozi"};
+
+/* ---------- klijenti ---------- */
+let klijenti=[],klLoaded=false,editKl=null;
+function renderKlSelect(){
+  const s=$("#k_sel"),cur=s.value,q=$("#k_find").value.trim().toLowerCase();
+  const m=klijenti.filter(k=>!q||k.id===cur||[k.naziv,k.pib,k.adresa,k.kontakt].join(" ").toLowerCase().includes(q));
+  s.innerHTML=(q?`<option value="">— ${m.length} ${m.length===1?"rezultat":"rezultata"} · ili novi klijent (ručni unos) —</option>`:`<option value="">— Novi klijent (ručni unos) —</option>`)+m.map(k=>`<option value="${esc(k.id)}">${esc(k.naziv)}${k.adresa?" – "+esc(k.adresa):""}</option>`).join("");
+  s.value=klijenti.some(k=>k.id===cur)?cur:"";
+  if(pendingK&&klijenti.some(k=>k.id===pendingK.k)){s.value=pendingK.k;onKlSel(true);$("#v_sel").value=pendingK.v||"";pendingK=null}
+  $("#klStat").textContent=klijenti.length?`${klijenti.length} u spisku`:"";
+}
+function onKlSel(restore){
+  if(restore&&restore.type)restore=false;
+  const k=klijenti.find(x=>x.id===$("#k_sel").value);
+  $("#k_addWrap").hidden=!!k;
+  $("#kSelLogo").innerHTML=k&&k.logoId?`<span class="clogo sm"><img src="${BLOB}${esc(k.logoId)}" alt="Logo klijenta"></span>`:"";
+  if(k&&!restore){[["naziv","naziv"],["pib","pib"],["adresa","adresa"],["email","email"]].forEach(([f,p])=>$("#k_"+f).value=k[p]||"");$("#k_naziv").classList.remove("invalid")}
+  const vz=(k&&k.vozila)||[];
+  $("#v_selWrap").hidden=!vz.length;
+  $("#v_sel").innerHTML=`<option value="">— Drugo vozilo (ručni unos) —</option>`+vz.map((v,i)=>`<option value="${i}">${esc(v.reg)}${v.model?" · "+esc(v.model):""}</option>`).join("");
+  if(!restore&&vz.length===1){$("#v_sel").value="0";onVSel()}
+}
+function onVSel(){const k=klijenti.find(x=>x.id===$("#k_sel").value);const v=k&&k.vozila&&k.vozila[$("#v_sel").value];
+  if(v){$("#v_reg").value=v.reg||"";$("#v_model").value=v.model||"";$("#v_vin").value=v.vin||"";$("#v_reg").classList.remove("invalid")}}
+$("#k_sel").onchange=onKlSel;
+$("#k_find").oninput=()=>{renderKlSelect();const s=$("#k_sel");if(!s.value&&s.options.length===2){s.value=s.options[1].value;onKlSel()}};$("#v_sel").onchange=onVSel;
+
+function addKlVoz(v={}){const tr=document.createElement("tr");const i=Date.now()+Math.random().toString(36).slice(2,6);
+  tr.innerHTML=`<td><input type="text" class="mono" id="kvr_${i}" aria-label="Reg. oznaka" value="${esc(v.reg||"")}" autocapitalize="characters"></td><td><input type="text" id="kvm_${i}" aria-label="Marka i model" value="${esc(v.model||"")}"></td><td><input type="text" class="mono" id="kvv_${i}" aria-label="VIN" value="${esc(v.vin||"")}"></td><td><button type="button" class="xbtn" aria-label="Ukloni vozilo">×</button></td>`;
+  tr.querySelector(".xbtn").onclick=()=>tr.remove();$("#klVoz").appendChild(tr)}
+$("#klVozAdd").onclick=()=>addKlVoz();
+let klLogo=null;
+function klLogoRender(){const id=klLogo&&klLogo.id;$("#klLogoPrev").className="clogo md"+(id?"":" empty-l");
+  $("#klLogoPrev").innerHTML=id?`<img src="${klLogo.url||BLOB+esc(id)}" alt="Logo klijenta">`:"Bez logoa";
+  $("#klLogoDel").hidden=!id;$("#klLogoBtn").hidden=!assets}
+$("#klLogoIn").onchange=async e=>{const f=e.target.files[0];e.target.value="";if(!f||!assets)return;$("#klLogoStat").textContent="Otpremanje…";
+  try{const svg=f.type==="image/svg+xml";const b=svg?f:await shrink(f,600,.92,"image/png").catch(()=>f);const r=await assets.upload(b,svg?{type:"image/svg+xml"}:{type:b.type||f.type});klLogo={id:r.id,url:r.url};klLogoRender();$("#klLogoStat").textContent="Logo je otpremljen. Sačuvajte klijenta."}
+  catch(err){$("#klLogoStat").textContent="Logo nije otpremljen: "+(err.message||"greška")}};
+$("#klLogoDel").onclick=()=>{klLogo=null;klLogoRender();$("#klLogoStat").textContent="Logo će biti uklonjen kada sačuvate klijenta."};
+function klFormLoad(k){editKl=k?k.id:null;klLogo=k&&k.logoId?{id:k.logoId}:null;klLogoRender();$("#klLogoStat").textContent="";
+  ["naziv","pib","mod","kontakt","tel","email","adresa"].forEach(f=>$("#kl_"+f).value=(k&&k[f])||"");
+  $("#klVoz").innerHTML="";((k&&k.vozila)||[]).forEach(addKlVoz);if(!k||!(k.vozila||[]).length)addKlVoz();
+  $("#klFormT").textContent=k?"Izmena klijenta":"Novi klijent";$("#klCancel").hidden=!k;$("#klMsg").textContent="";$("#kl_naziv").classList.remove("invalid")}
+$("#klCancel").onclick=()=>klFormLoad(null);
+$("#klSave").onclick=async()=>{
+  const naziv=val("kl_naziv");if(!naziv){$("#kl_naziv").classList.add("invalid");$("#klMsg").textContent="Unesite naziv klijenta.";$("#kl_naziv").focus();return}
+  if(!db){$("#klMsg").textContent="Spisak trenutno nije dostupan.";return}
+  const prev=klijenti.find(k=>k.id===editKl);const d={...(prev||{}),naziv,pib:val("kl_pib"),mod:val("kl_mod"),kontakt:val("kl_kontakt"),tel:val("kl_tel"),email:val("kl_email"),adresa:val("kl_adresa"),
+    vozila:[...$("#klVoz").rows].map(r=>{const i=r.querySelectorAll("input");return{reg:i[0].value.trim().toUpperCase(),model:i[1].value.trim(),vin:i[2].value.trim().toUpperCase()}}).filter(v=>v.reg)};
+  if(klLogo)d.logoId=klLogo.id;else delete d.logoId;
+  const id=editKl||("k"+Date.now().toString(36));
+  delete d.id;try{await db.doc("klijenti/"+id).set(d);toast(`Klijent „${naziv}” je sačuvan.`);klFormLoad(null)}
+  catch(e){$("#klMsg").textContent="Čuvanje nije uspelo: "+(e.message||"nemate dozvolu")}};
+$("#kq").oninput=()=>renderKlList();
+function renderKlList(){
+  const q=$("#kq").value.trim().toLowerCase();
+  const rows=klijenti.filter(k=>!q||[k.naziv,k.pib,k.adresa,k.kontakt,k.mod,k.tel,...(k.vozila||[]).map(v=>v.reg)].join(" ").toLowerCase().includes(q));
+  $("#kCount").textContent=rows.length?`${rows.length} ${rows.length===1?"klijent":"klijenata"}`:"";
+  if(!rows.length){$("#kList").innerHTML=`<div class="empty">${!klLoaded?"Učitavanje klijenata…":klijenti.length?"Nijedan klijent ne odgovara pretrazi.":"Spisak je prazan. Dodajte prvog klijenta formom iznad."}</div>`;return}
+  $("#kList").innerHTML=rows.map(k=>`<div class="krow"><span class="clogo sm${k.logoId?"":" empty-l"}">${k.logoId?`<img src="${BLOB}${esc(k.logoId)}" alt="" loading="lazy">`:""}</span><div class="mid"><b>${esc(k.naziv)}${k.mod?` <span class="tag" style="--c:var(--muted);vertical-align:2px">${esc(k.mod)}</span>`:""}</b><span>${[k.pib&&"PIB "+k.pib,k.adresa,k.kontakt,k.tel].filter(Boolean).map(esc).join(" · ")}</span><span style="display:block" class="mono">${(k.vozila||[]).map(v=>esc(v.reg)).join(", ")||"bez vozila"}</span></div>
+   ${(isAdmin()||can("klijentiMenja"))?`<button class="btn sm" data-ed="${esc(k.id)}">Izmeni</button>`:""}${isAdmin()?`<button class="btn sm dng" data-del="${esc(k.id)}">Obriši</button>`:""}</div>`).join("");
+}
+$("#kList").addEventListener("click",async e=>{
+  const ed=e.target.closest("[data-ed]");if(ed){klFormLoad(klijenti.find(k=>k.id===ed.dataset.ed));$("#klForm").scrollIntoView({behavior:"smooth"});return}
+  const del=e.target.closest("[data-del]");if(!del)return;
+  if(!del.dataset.arm){del.dataset.arm=1;del.textContent="Potvrdi brisanje";setTimeout(()=>{if(del.isConnected){delete del.dataset.arm;del.textContent="Obriši"}},3000);return}
+  try{await db.doc("klijenti/"+del.dataset.del).delete();toast("Klijent je obrisan.")}catch(err){toast("Brisanje nije uspelo: "+(err.message||"nemate dozvolu"))}
+});
+
+/* ---------- save ---------- */
+const val=id=>($("#"+id)?.value||"").trim();
+$("#nf").addEventListener("submit",e=>{e.preventDefault();if(editId){if(validateNalog())doSave();return}if(timer.stop){doSave();return}if(validateNalog())openClose()});
+function validateNalog(){const msg=$("#fMsg");msg.textContent="";
+  if(!editId&&!timer.start){msg.textContent="Pritisnite Start na vrhu forme kada počnete posao.";$("#timerSec").scrollIntoView({block:"center"});return}
+  if(editId){const a=Date.parse(val("e_start")),b=Date.parse(val("e_stop")),p=+val("e_pauze")||0;
+    if(!a||!b){msg.textContent="Unesite početak i kraj rada.";$("#e_start").focus();return}
+    if(b<=a){msg.textContent="Kraj rada mora biti posle početka.";$("#e_stop").focus();return}
+    if(p<0||p*60000>=b-a){msg.textContent="Pauze ne mogu biti duže od ukupnog vremena.";$("#e_pauze").focus();return}}
+  let bad=[];document.querySelectorAll("#nf [data-req]").forEach(el=>{const ok=!!el.value.trim();el.classList.toggle("invalid",!ok);if(!ok)bad.push(el)});
+  if(bad.length){msg.textContent="Popunite obavezna polja označena zvezdicom.";bad[0].focus();return}
+  if(!$("#u_stanje input:checked")){$("#u_stanje").classList.add("invalid-g");msg.textContent="Označite da li je GPS uređaj nov ili polovan.";$("#u_stanje").scrollIntoView({block:"center"});return}
+  const dxs=[...$("#dxList").children];for(let i=0;i<dxs.length;i++){const d=dxs[i],v=d.querySelector(".dx-v"),sg=d.querySelector(".dx-s");const okV=!!v.value.trim(),okS=!!sg.querySelector("input:checked");v.classList.toggle("invalid",!okV);sg.classList.toggle("invalid-g",!okS);
+    if(!okV||!okS){msg.textContent=`Dodatna oprema ${i+1}: ${!okV?"upišite vrstu opreme":"označite da li je nova ili polovna"} (ili je uklonite sa ×).`;d.scrollIntoView({block:"center"});return}}
+  for(const k of ["imei","iccid","iccid2"]){const e2=chkCode(k);if(e2){msg.textContent=e2;$("#u_"+k).focus();return}}
+  if(val("k_email")&&!/^[^\s@,;]+@[^\s@,;]+\.[^\s@,;]+$/.test(val("k_email"))){msg.textContent="Adresa e-pošte klijenta nije ispravna.";$("#k_email").focus();return}
+  if(val("u_iccid2")&&!val("u_op2")){msg.textContent="Izaberite mobilnog operatera za SIM2.";$("#u_op2").focus();return}
+  if(!sigInk&&!editSig){msg.textContent="Nedostaje potpis klijenta.";cv.scrollIntoView({block:"center"});return}
+  if(!db){msg.textContent="Arhiva trenutno nije dostupna, pa nalog ne može da se zatvori. Proverite da ste prijavljeni.";return}
+  return true}
+async function doSave(){const msg=$("#fMsg");msg.textContent="";
+  const btn=$("#fSave");btn.disabled=true;btn.textContent="Čuvanje…";
+  try{
+    const det={};TIP[tip].p.forEach(p=>{if(p.t==="chk")det[p.k]=[...document.querySelectorAll(`#d_${p.k} input:checked`)].map(i=>i.value);else det[p.k]=val("d_"+p.k)});
+    const dodatna=dxData().filter(o=>o.vrsta||o.model||o.sn);
+    let fotoIds=[],potpisId="";
+    if(assets){
+      btn.textContent="Otpremanje slika…";
+      for(const p of photos){if(!p.blob){fotoIds.push(p.id);continue}const r=await assets.upload(p.blob,{type:"image/jpeg"});fotoIds.push(r.id)}
+      if(sigInk){const sb=await new Promise(r=>cv.toBlob(r,"image/png"));const r=await assets.upload(sb,{type:"image/png"});potpisId=r.id}else potpisId=editSig||"";
+    }else if(photos.some(p=>p.blob)){throw{message:"Otpremanje slika nije dozvoljeno za vaš nalog pristupa."}}else{fotoIds=photos.map(p=>p.id);potpisId=editSig||""}
+    btn.textContent="Upis u arhivu…";
+    let broj,id;
+    if(editId){broj=editOrig.broj;id=editId}
+    else{if(!timer.nid){timer.nid="rn"+Date.now().toString(36);saveDraft()}id=timer.nid;broj=""}
+    const doc={broj,tip,createdAt:editId?editOrig.createdAt:Date.now(),
+      klijent:{naziv:val("k_naziv"),pib:val("k_pib"),adresa:val("k_adresa"),logoId:((klijenti.find(x=>x.id===$("#k_sel").value)||{}).logoId)||""},klijentId:$("#k_sel").value||"",
+      vozilo:{reg:val("v_reg").toUpperCase(),model:val("v_model"),vin:val("v_vin").toUpperCase(),km:val("v_km"),jed:val("v_jed")||"km"},
+      uredjaj:{model:val("u_model"),stanje:($("#u_stanje input:checked")||{}).value||"",imei:val("u_imei"),iccid:val("u_iccid").toUpperCase(),op1:val("u_op1"),iccid2:val("u_iccid2").toUpperCase(),op2:val("u_iccid2")?val("u_op2"):""},
+      detalji:det,dodatna,
+      rad:{datum:val("r_datum"),od:fmtT(timer.start),do:fmtT(timer.stop),start:timer.start,stop:timer.stop,trajanjeMin:Math.round(radMs()/60000),pauzeMin:Math.round(pauzeMs(timer.stop)/60000),pauze:(timer.pauze||[]).map(p=>({od:p.od,do:p.do})),serviser:val("r_serviser")},
+      napomena:val("napomena"),fotoIds,potpisId,potpisnik:val("potpisnik"),lokacija:geo||null,emailKopija:val("k_email")};
+    if(editId){
+      const a=Date.parse(val("e_start")),b=Date.parse(val("e_stop")),pm=Math.round(+val("e_pauze")||0);
+      doc.rad={...doc.rad,od:fmtT(a),do:fmtT(b),start:a,stop:b,pauzeMin:pm,trajanjeMin:Math.max(0,Math.round((b-a)/60000)-pm),pauze:pm===(editOrig.rad?.pauzeMin||0)?(editOrig.rad?.pauze||[]):[]};
+      if(editOrig.createdBy)doc.createdBy=editOrig.createdBy;if(editOrig.oprema)doc.oprema=editOrig.oprema;
+      doc.izmene=[...(editOrig.izmene||[]),{ko:myId||"",kada:Date.now()}];
+      Object.assign(doc,await db.doc("nalozi/"+id).set(doc));
+      nalozi=[{id,...doc},...nalozi.filter(x=>x.id!==id)];formOpen=false;
+      resetForm();toast(`Izmene naloga ${broj} su sačuvane.`);location.hash="#n-"+id;btn.disabled=false;return}
+    const ex=await db.doc("nalozi/"+id).get();
+    const saved=ex.exists?ex.data():await db.doc("nalozi/"+id).set(doc);
+    Object.assign(doc,saved);
+    try{
+      const kid=$("#k_sel").value,vz={reg:doc.vozilo.reg,model:doc.vozilo.model,vin:doc.vozilo.vin};
+      if(!kid&&$("#k_add").checked){await db.doc("klijenti/k"+Date.now().toString(36)).set((({logoId,...o})=>({...o,vozila:[vz]}))(doc.klijent))}
+      else if(kid){const k=klijenti.find(x=>x.id===kid);if(k&&!(k.vozila||[]).some(v=>v.reg===vz.reg))await db.doc("klijenti/"+kid).update({vozila:[...(k.vozila||[]),vz]})}
+    }catch(e){}
+    formOpen=false;clearDraft();
+    ls.set("rn_serviser",doc.rad.serviser);
+    nalozi=[{id,...doc},...nalozi.filter(x=>x.id!==id)];
+    const mailTo=doc.emailKopija;
+    resetForm();toast(`Nalog ${doc.broj} je sačuvan.`);location.hash=vis().some(x=>x.id===id)?"#n-"+id:"#nalozi";
+    if(mailTo)sendNalogEmail({id,...doc},mailTo);
+  }catch(err){if(editId){msg.textContent="Izmene nisu sačuvane: "+(err&&err.message||"greška u vezi")+". Pokušajte ponovo.";btn.disabled=false;btn.textContent="Sačuvaj izmene";return}
+    msg.textContent="Nalog je zatvoren, ali nije sačuvan: "+(err&&err.message||"greška u vezi")+". Proverite internet vezu i pritisnite „Sačuvaj zatvoren nalog”.";btn.disabled=false;btn.textContent="Sačuvaj zatvoren nalog";return}
+  btn.disabled=false;btn.textContent="Stop i zatvori nalog";
+}
+
+/* ---------- izmena zatvorenog naloga ---------- */
+const toLocalIn=ms=>{if(!ms)return"";const d=new Date(ms);return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`};
+function eTraj(){const a=Date.parse(val("e_start")),b=Date.parse(val("e_stop")),p=+val("e_pauze")||0;$("#e_traj").textContent=(a&&b&&b>a)?`Trajanje rada: ${fmtDur(Math.max(0,Math.round((b-a)/60000)-p))}`:""}
+["e_start","e_stop","e_pauze"].forEach(id=>$("#"+id).addEventListener("input",eTraj));
+function editNalog(n){
+  resetForm(TIP[n.tip]?n.tip:"ostalo");editId=n.id;editOrig=n;renderBanner();
+  const set=(id,v)=>{const el=$("#"+id);if(el)el.value=v??""};
+  set("k_naziv",n.klijent?.naziv);set("k_pib",n.klijent?.pib);set("k_adresa",n.klijent?.adresa);
+  if(n.klijentId&&klijenti.some(k=>k.id===n.klijentId)){$("#k_sel").value=n.klijentId;onKlSel(true)}
+  set("v_reg",n.vozilo?.reg);set("v_model",n.vozilo?.model);set("v_vin",n.vozilo?.vin);set("v_km",n.vozilo?.km);set("v_jed",n.vozilo?.jed||"km");
+  const u=n.uredjaj||{};set("u_model",u.model||n.detalji?.uredjaj);if(u.stanje==="Nov")$("#u_st_nov").checked=true;if(u.stanje==="Polovan")$("#u_st_pol").checked=true;
+  set("u_imei",u.imei||n.detalji?.imei);set("u_iccid",u.iccid);set("u_op1",u.op1);set("u_iccid2",u.iccid2);set("u_op2",u.op2);["imei","iccid","iccid2"].forEach(hintCode);
+  TIP[tip].p.forEach(p=>{const v=n.detalji?.[p.k];if(p.t==="chk")(v||[]).forEach(x=>{const i=[...document.querySelectorAll(`#d_${p.k} input`)].find(i=>i.value===x);if(i)i.checked=true});else set("d_"+p.k,v)});
+  (n.dodatna||[]).forEach(o=>addDx(o));
+  set("r_datum",n.rad?.datum);set("r_serviser",n.rad?.serviser);set("napomena",n.napomena);set("potpisnik",n.potpisnik);set("k_email",n.emailKopija);geo=n.lokacija||null;renderGeo();
+  photos=(n.fotoIds||[]).map(id=>({id,url:BLOB+id}));renderPhotos();
+  editSig=n.potpisId||null;if(editSig){$("#sigOld").src=BLOB+editSig;$("#sigOld").hidden=false;$("#sigHint").hidden=true}
+  $("#timerSec").hidden=true;$("#editTimes").hidden=false;
+  set("e_start",toLocalIn(n.rad?.start));set("e_stop",toLocalIn(n.rad?.stop));set("e_pauze",n.rad?.pauzeMin||0);eTraj();
+  $("#fSave").textContent="Sačuvaj izmene";$("#fReset").textContent="Odustani od izmene";
+  formOpen=true;location.hash="#novi";
+}
+$("#dEdit").onclick=()=>{const n=vis().find(x=>x.id===curId);if(n&&can("izmena"))editNalog(n)};
+
+/* ---------- archive ---------- */
+const fmtD=d=>{if(!d)return"";const [y,m,dd]=d.split("-");return `${dd}.${m}.${y}.`};
+function renderFilters(){
+  const V=vis();const c={sve:V.length};V.forEach(n=>c[n.tip]=(c[n.tip]||0)+1);
+  $("#filters").innerHTML=[["sve","Sve"],...Object.entries(TIP).map(([k,t])=>[k,t.n])].map(([k,l])=>`<button class="fchip" data-f="${k}" aria-pressed="${filt===k}">${l} · ${c[k]||0}</button>`).join("");
+}
+$("#filters").addEventListener("click",e=>{const b=e.target.closest(".fchip");if(!b)return;filt=b.dataset.f;renderArchive()});
+$("#q").addEventListener("input",()=>renderArchive());
+function renderArchive(){
+  renderFilters();
+  if(!loaded&&!nalozi.length)return;
+  const q=$("#q").value.trim().toLowerCase();
+  const rows=vis().filter(n=>(filt==="sve"||n.tip===filt)&&(!q||[n.broj,n.klijent?.naziv,n.vozilo?.reg,n.detalji?.imei,n.uredjaj?.imei,n.uredjaj?.iccid,n.uredjaj?.iccid2,n.detalji?.saVozila,n.detalji?.naVozilo,n.rad?.serviser,n.uredjaj?.model,...(n.dodatna||[]).map(o=>o.vrsta+" "+o.model+" "+o.sn),...(n.oprema||[]).map(o=>o.sn)].join(" ").toLowerCase().includes(q)));
+  $("#count").textContent=rows.length?`${rows.length} ${rows.length===1?"nalog":"naloga"}`:"";
+  if(!rows.length){$("#list").innerHTML=`<div class="empty">${vis().length?"Nijedan nalog ne odgovara pretrazi.":(nalozi.length?"Nema naloga u periodu koji vidite.":"Još nema sačuvanih naloga. Prvi nalog napravite dugmetom +.")}</div>`;return}
+  $("#list").innerHTML=rows.map(n=>{const t=TIP[n.tip]||TIP.ostalo;return `<a class="row" href="#n-${esc(n.id)}" style="--c:var(${t.c})"><span class="no">${esc(n.broj)}</span><span class="mid"><b>${esc(n.klijent?.naziv)}</b><span><span class="mono">${esc(n.vozilo?.reg)}</span> · ${esc(n.rad?.serviser)}</span></span><span class="dt"><span class="tag">${t.n}</span><br>${fmtD(n.rad?.datum)}</span></a>`}).join("");
+}
+
+/* ---------- sheet (detail + pdf) ---------- */
+function kv(pairs){const p=pairs.filter(([,v])=>v!==undefined&&v!==null&&String(v).trim()!=="");return p.length?`<dl class="s-kv">${p.map(([k,v])=>`<dt>${esc(k)}</dt><dd>${v}</dd>`).join("")}</dl>`:`<p class="s-txt" style="color:var(--sm)">—</p>`}
+function sheet(n,mode){
+  const V=k=>mode==="interni"||vidOn(k);const H=(k,v)=>V(k)?v:"";
+  const clid=n.klijent?.logoId||((klijenti.find(k=>k.id===n.klijentId)||{}).logoId);
+  const t=TIP[n.tip]||TIP.ostalo;const f=firma;const r=n.rad||{};const km=(+r.km2&&+r.km1&&+r.km2>=+r.km1)?(r.km2-r.km1)+" km":"";
+  const mono=v=>v?`<span class="mono">${esc(v)}</span>`:"";
+  const det=t.p.map(p=>{const v=n.detalji?.[p.k];if(p.t==="txt")return "";if(p.t==="chk")return [p.l,(v&&v.length)?esc(v.join(", ")):""];return [p.l,p.m?mono(v):esc(v)]}).filter(Boolean);
+  const txt=!V("detalji")?"":t.p.filter(p=>p.t==="txt"&&n.detalji?.[p.k]).map(p=>`<div class="s-blk" style="margin-bottom:8px"><h3>${esc(p.l)}</h3><p class="s-txt">${esc(n.detalji[p.k])}</p></div>`).join("");
+  const firmLine=[f.adresa,f.pib&&("PIB "+f.pib),f.mb&&("MB "+f.mb),f.tel,f.email,f.web].filter(Boolean).map(esc).join(" · ");
+  return `<div class="sheet">
+  <div class="s-top"><div class="s-firm"><div>${f.logoId?`<img src="${BLOB}${esc(f.logoId)}" alt="" style="margin-bottom:6px">`:`<img class="s-logo" src="${LOGO_D}" alt="MonitoringNET">`}<div class="fn">${esc(f.naziv||"")}</div><div class="fa">${firmLine}</div></div></div>
+   ${clid&&V("klLogo")?`<div class="s-cl"><img src="${BLOB}${esc(clid)}" alt="Logo klijenta" crossorigin="anonymous"></div>`:""}
+   <div class="s-no"><div class="t">Radni nalog</div><div class="n">${esc(n.broj)}</div><div class="d"><span class="tag" style="--c:var(${t.c})">${t.n}</span> · ${fmtD(r.datum)}</div>${mode==="interni"?`<div class="d" style="margin-top:4px"><span class="tag" style="--c:var(--danger)">Interni primerak</span></div>`:""}</div></div>
+  <div class="s-grid">
+   <div class="s-blk"><h3>Klijent</h3>${kv([["Naziv",esc(n.klijent?.naziv)],["PIB",esc(n.klijent?.pib)],["Adresa",esc(n.klijent?.adresa)],["Lokacija rada",H("lokacija",n.lokacija?`<a href="https://www.google.com/maps?q=${n.lokacija.lat},${n.lokacija.lng}" target="_blank" rel="noopener">${(+n.lokacija.lat).toFixed(5)}, ${(+n.lokacija.lng).toFixed(5)}</a>`:"")]])}</div>
+   <div class="s-blk"><h3>Vozilo</h3>${kv([["Reg. oznaka",mono(n.vozilo?.reg)],["Marka i model",esc(n.vozilo?.model)],["VIN",H("vin",mono(n.vozilo?.vin))],[n.vozilo?.jed==="h"?"Radni sati":"Kilometraža",H("km",n.vozilo?.km?esc(n.vozilo.km)+(n.vozilo?.jed==="h"?" radnih sati":" km"):"")]])}</div>
+  </div>
+  <div class="s-blk" style="margin-bottom:10px"><h3>GPS uređaj</h3>${kv([["Model",H("gpsModel",esc(n.uredjaj?.model||n.detalji?.uredjaj))],["Stanje",H("gpsStanje",esc(n.uredjaj?.stanje))],["IMEI",H("imei",mono(n.uredjaj?.imei||n.detalji?.imei))],["ICCID – SIM1",H("iccid",mono(n.uredjaj?.iccid))],["Operater – SIM1",H("operater",esc(n.uredjaj?.op1||n.detalji?.operater))],["ICCID – SIM2",H("iccid",mono(n.uredjaj?.iccid2))],["Operater – SIM2",H("operater",esc(n.uredjaj?.op2))]])}</div>
+  ${V("detalji")&&det.some(([,v])=>v&&String(v).trim())?`<div class="s-blk" style="margin-bottom:10px"><h3>${t.n}</h3>${kv(det)}</div>`:""}
+  ${txt}
+  ${(n.dodatna&&n.dodatna.length&&V("dxVrsta"))?`<div class="s-blk"><h3>Dodatna oprema</h3></div><table class="s-tbl"><thead><tr><th>Vrsta</th><th>Model</th>${V("dxStanje")?"<th>Stanje</th>":""}${V("dxSn")?"<th>Serijski broj</th>":""}</tr></thead><tbody>${n.dodatna.map(o=>`<tr><td>${esc(o.vrsta)}</td><td>${esc(o.model)}</td>${V("dxStanje")?`<td>${esc(o.stanje)}</td>`:""}${V("dxSn")?`<td class="mono">${esc(o.sn)}</td>`:""}</tr>`).join("")}</tbody></table>`:""}
+  ${(n.oprema&&n.oprema.length&&mode==="interni")?`<div class="s-blk"><h3>Oprema</h3></div><table class="s-tbl"><thead><tr><th>Naziv</th><th>Serijski broj / IMEI</th><th style="width:60px">Kol.</th></tr></thead><tbody>${n.oprema.map(o=>`<tr><td>${esc(o.naziv)}</td><td class="mono">${esc(o.sn)}</td><td>${esc(o.kol)}</td></tr>`).join("")}</tbody></table>`:""}
+  <div class="s-blk" style="margin-bottom:10px"><h3>Rad</h3>${kv([["Datum",fmtD(r.datum)],["Serviser",H("serviser",esc(r.serviser))],["Radno vreme",H("vreme",[r.od,r.do].filter(Boolean).map(esc).join(" – "))],["Trajanje rada",H("vreme",r.trajanjeMin!=null?esc(fmtDur(r.trajanjeMin)):"")],["Pauze",H("pauze",r.pauzeMin?esc(fmtDur(r.pauzeMin)):"")]])}</div>
+  ${n.napomena&&V("napomena")?`<div class="s-blk" style="margin-bottom:10px"><h3>Napomena</h3><p class="s-txt">${esc(n.napomena)}</p></div>`:""}
+  ${(n.fotoIds&&n.fotoIds.length&&V("foto"))?`<div class="s-blk"><h3>Fotografije (${n.fotoIds.length})</h3></div><div class="s-ph">${n.fotoIds.map(i=>`<img src="${BLOB}${esc(i)}" alt="" crossorigin="anonymous">`).join("")}</div>`:""}
+  <div class="s-sign"><div><div class="box"></div><div class="cap">Serviser${V("serviser")?": "+esc(r.serviser):""}</div></div>
+   <div><div class="box">${n.potpisId?`<img src="${BLOB}${esc(n.potpisId)}" alt="Potpis" crossorigin="anonymous">`:""}</div><div class="cap">Odgovorno lice: ${esc(n.potpisnik)}</div></div></div>
+  ${mode==="interni"&&n.poslato&&n.poslato.length?`<p class="s-txt" style="margin-top:10px;color:var(--sm)">Poslato klijentu: ${n.poslato.map(p=>esc(p.na)+" ("+new Date(p.kada).toLocaleString("sr-RS")+")").join("; ")}</p>`:""}
+  <div class="s-foot"><span>${esc(n.broj)}</span><span>Sačuvano ${new Date(n.createdAt||Date.now()).toLocaleString("sr-RS")}${mode==="interni"&&n.izmene&&n.izmene.length?` · izmenjeno ${n.izmene.length}×, poslednji put ${new Date(n.izmene[n.izmene.length-1].kada).toLocaleString("sr-RS")}`:""}</span></div>
+ </div>`;
+}
+function renderDetail(){
+  const n=vis().find(x=>x.id===curId);$("#dConfirm").innerHTML="";
+  $("#dDel").hidden=!(can("brisanje")&&n);$("#dEdit").hidden=!(can("izmena")&&n);$("#dMail").hidden=!(n&&(isAdmin()||can("izmena")||n.createdBy===myId));$("#dPdf").hidden=!can("pdf");$("#dPdf").disabled=!n||!downloads;
+  $("#dPdf").title=downloads?"":"Preuzimanje fajlova nije dostupno u ovom prikazu";
+  const ci=can("pdfInterni");if(!ci)dView="klijent";$("#dSeg").hidden=!ci||!n;$("#dv_k").checked=dView==="klijent";$("#dv_i").checked=dView==="interni";
+  $("#dPdf").textContent=dView==="interni"?"Preuzmi interni PDF":"Preuzmi PDF za klijenta";
+  $("#dBody").innerHTML=n?sheet(n,dView):`<div class="empty">${loaded?(nalozi.some(x=>x.id===curId)?"Ovaj nalog nije dostupan za vašu ulogu.":"Nalog nije pronađen. Možda je obrisan."):"Učitavanje naloga…"}</div>`;
+}
+$("#dDel").onclick=()=>{const n=nalozi.find(x=>x.id===curId);if(!n)return;
+  $("#dConfirm").innerHTML=`<div class="confirm"><span style="flex:1 1 200px">Trajno obrisati nalog <b class="mono">${esc(n.broj)}</b>?</span><button class="btn sm" id="dNo">Odustani</button><button class="btn sm dng" id="dYes">Obriši nalog</button></div>`;
+  $("#dNo").onclick=()=>$("#dConfirm").innerHTML="";
+  $("#dYes").onclick=async()=>{try{await db.doc("nalozi/"+n.id).delete();nalozi=nalozi.filter(x=>x.id!==n.id);toast(`Nalog ${n.broj} je obrisan.`);location.hash="#nalozi"}catch(e){toast("Brisanje nije uspelo: "+(e.message||"nemate dozvolu"))}};
+};
+$("#dSeg").addEventListener("change",e=>{dView=e.target.value;renderDetail()});
+async function buildPdf(n,mode){
+    const host=$("#pdfhost");host.innerHTML=sheet(n,mode);
+    await Promise.all([...host.querySelectorAll("img")].map(i=>i.complete?0:new Promise(r=>{i.onload=i.onerror=r})));
+    if(document.fonts)await document.fonts.ready;
+    const c=await html2canvas(host.firstElementChild,{scale:2,useCORS:true,backgroundColor:"#ffffff",logging:false});
+    const {jsPDF}=window.jspdf;const pdf=new jsPDF({unit:"mm",format:"a4"});
+    const W=210,H=297,pxPerMm=c.width/W,pageH=Math.floor(H*pxPerMm);
+    for(let y=0,pg=0;y<c.height;y+=pageH,pg++){
+      const h=Math.min(pageH,c.height-y);const s=document.createElement("canvas");s.width=c.width;s.height=h;
+      const sx=s.getContext("2d");sx.fillStyle="#fff";sx.fillRect(0,0,s.width,h);sx.drawImage(c,0,y,c.width,h,0,0,c.width,h);
+      if(pg)pdf.addPage();pdf.addImage(s.toDataURL("image/jpeg",.9),"JPEG",0,0,W,h/pxPerMm);
+    }
+    host.innerHTML="";
+    return pdf.output("blob")}
+async function sendNalogEmail(n,to){
+  try{toast(`Šaljem nalog ${n.broj} na ${to}…`);const blob=await buildPdf(n,"klijent");const r=await RN.sendEmail(n.id,to,blob);const x=nalozi.find(y=>y.id===n.id);if(x)x.poslato=r.poslato;toast(`Nalog ${n.broj} je poslat na ${to}.`);if(curId===n.id)renderDetail()}
+  catch(e){toast("Nalog nije poslat mejlom: "+e.message)}}
+$("#dMail").onclick=()=>{const n=vis().find(x=>x.id===curId);if(!n)return;
+  const pre=n.emailKopija||((klijenti.find(k=>k.id===n.klijentId)||{}).email)||"";
+  $("#dConfirm").innerHTML=`<div class="confirm" style="background:var(--surface);border-color:var(--line)"><label class="l" for="dmTo" style="flex-basis:100%">Pošalji PDF za klijenta na e-poštu</label><input type="email" id="dmTo" style="flex:1 1 220px" placeholder="adresa@firma.rs"><button class="btn sm" id="dmNo">Odustani</button><button class="btn sm pri" id="dmYes">Pošalji</button></div>`;
+  $("#dmTo").value=pre;$("#dmTo").focus();$("#dmNo").onclick=()=>$("#dConfirm").innerHTML="";
+  $("#dmYes").onclick=()=>{const to=$("#dmTo").value.trim();if(!to)return;$("#dConfirm").innerHTML="";sendNalogEmail(n,to)}};
+$("#dPdf").onclick=async()=>{
+  const n=vis().find(x=>x.id===curId);if(!n||!downloads||!can("pdf"))return;const b=$("#dPdf");b.disabled=true;const bt=b.textContent;b.textContent="Pravim PDF…";
+  try{
+    const mode=can("pdfInterni")?dView:"klijent";const blob=await buildPdf(n,mode);
+    const name=`${n.broj}_${(n.vozilo?.reg||"").replace(/[^A-Za-z0-9ČĆŠŽĐčćšžđ-]/g,"")}${mode==="interni"?"_interni":""}.pdf`;
+    await downloads.save({filename:name,data:blob});toast("PDF je spreman.");
+  }catch(e){if(e&&e.code&&/declin|cancel|denied/i.test(e.code))toast("Preuzimanje je otkazano.");else toast("PDF nije napravljen: "+(e&&e.message||"greška"))}
+  finally{b.disabled=false;b.textContent=bt}
+};
+
+/* ---------- uloge ---------- */
+let rDraft=null;
+function renderUloge(){
+  if(!rDraft)rDraft=JSON.parse(JSON.stringify(uloge));
+  const opt=(arr,cur)=>arr.map(([v,l])=>`<option value="${v}"${String(v)===String(cur)?" selected":""}>${esc(l)}</option>`).join("");
+  $("#defUloga").innerHTML=rDraft.lista.map(r=>`<option value="${esc(r.id)}"${r.id===rDraft.def?" selected":""}>${esc(r.naziv||"(bez naziva)")}</option>`).join("");
+  $("#rList").innerHTML=rDraft.lista.map((r,i)=>`<div class="role-card" data-i="${i}">
+   <div class="rc-h"><div class="f"><label class="l" for="rn_${esc(r.id)}">Naziv uloge</label><input type="text" id="rn_${esc(r.id)}" data-k="naziv" value="${esc(r.naziv)}"></div>
+   <div class="f"><label class="l" for="rv_${esc(r.id)}">Vidi u arhivi</label><select id="rv_${esc(r.id)}" data-k="vidi">${opt(Object.entries(VIDI),r.vidi)}</select></div>
+   <div class="f"><label class="l" for="rd_${esc(r.id)}">Koliko unazad</label><select id="rd_${esc(r.id)}" data-k="dana">${opt(DANI,r.dana)}</select></div>
+   ${r.id===rDraft.def?"":`<button type="button" class="btn sm dng" data-rdel="${i}">Obriši ulogu</button>`}</div>
+   <div class="checks">${PRAVA.map(([k,l])=>`<label class="chk"><input type="checkbox" id="rp_${esc(r.id)}_${k}" data-p="${k}"${(r.prava||{})[k]?" checked":""}>${esc(l)}</label>`).join("")}</div></div>`).join("");
+  $("#pvSel").innerHTML=rDraft.lista.map(r=>`<option value="${esc(r.id)}">${esc(r.naziv)}</option>`).join("");
+  renderUsers();
+}
+$("#rList").addEventListener("input",e=>{const c=e.target.closest(".role-card");if(!c)return;const r=rDraft.lista[+c.dataset.i];
+  if(e.target.dataset.k){r[e.target.dataset.k]=e.target.dataset.k==="dana"?+e.target.value:e.target.value}
+  if(e.target.dataset.p){r.prava=r.prava||{};if(e.target.checked)r.prava[e.target.dataset.p]=1;else delete r.prava[e.target.dataset.p]}
+  if(e.target.dataset.k==="naziv"){$("#defUloga").options[+c.dataset.i].textContent=e.target.value||"(bez naziva)"}});
+$("#rList").addEventListener("click",e=>{const b=e.target.closest("[data-rdel]");if(!b)return;
+  if(!b.dataset.arm){b.dataset.arm=1;b.textContent="Potvrdi brisanje";setTimeout(()=>{if(b.isConnected){delete b.dataset.arm;b.textContent="Obriši ulogu"}},3000);return}
+  rDraft.lista.splice(+b.dataset.rdel,1);renderUloge();$("#rMsg").style.color="var(--muted)";$("#rMsg").textContent="Uloga je uklonjena. Sačuvajte da bi promena važila."});
+$("#defUloga").onchange=e=>{rDraft.def=e.target.value;renderUloge()};
+$("#rAdd").onclick=()=>{rDraft.lista.push({id:"r"+Date.now().toString(36),naziv:"Nova uloga",vidi:"sve",dana:30,prava:{}});renderUloge();const l=$("#rList").lastElementChild;l.scrollIntoView({behavior:"smooth",block:"center"});l.querySelector("input").select()};
+$("#rSave").onclick=async()=>{if(!db)return;const m=$("#rMsg");
+  if(rDraft.lista.some(r=>!r.naziv.trim())){m.style.color="";m.textContent="Svaka uloga mora imati naziv.";return}
+  try{await db.doc("config/uloge").set({def:rDraft.def,lista:rDraft.lista});uloge=JSON.parse(JSON.stringify(rDraft));m.style.color="var(--ok)";m.textContent="Uloge su sačuvane.";renderUsers();applyRole()}
+  catch(e){m.style.color="";m.textContent="Čuvanje nije uspelo: "+(e.message||"nemate dozvolu")}};
+let usersCache=[];
+async function renderUsers(){
+  if($("#v-uloge").hidden||!isAdmin())return;
+  try{usersCache=await RN.users.list()}catch(e){$("#uList").innerHTML=`<div class="empty">${esc(e.message)}</div>`;return}
+  const L=uloge.lista,defN=esc((L.find(r=>r.id===uloge.def)||{}).naziv||"");
+  const roleOpts=cur=>`<option value="">Podrazumevana (${defN})</option>`+L.map(r=>`<option value="${esc(r.id)}"${r.id===cur?" selected":""}>${esc(r.naziv)}</option>`).join("");
+  $("#nu_role").innerHTML=roleOpts("");
+  $("#uList").innerHTML="";
+  usersCache.forEach(u=>{const d=document.createElement("div");d.className="urow"+(u.active?"":" off");
+    const cnt=nalozi.filter(n=>n.createdBy===u.id).length;
+    d.innerHTML=`<div class="nm"><b></b><small></small></div>
+      <select aria-label="Uloga"${u.isAdmin?" disabled":""}>${roleOpts(u.uloga||"")}</select>
+      <label class="chk"><input type="checkbox" data-a${u.isAdmin?" checked":""}${u.id===myId?" disabled":""}>Admin</label>
+      <button type="button" class="btn sm" data-p>Nova lozinka</button>
+      ${u.id===myId?"":`<button type="button" class="btn sm${u.active?" dng":""}" data-x>${u.active?"Deaktiviraj":"Aktiviraj"}</button>`}`;
+    d.querySelector("b").textContent=u.name;
+    d.querySelector("small").textContent=`${u.username}${u.id===myId?" · vi":""}${u.active?"":" · deaktiviran"} · ${cnt?`${cnt} ${cnt===1?"nalog":"naloga"}`:"bez naloga"}`;
+    const patch=async(body,ok)=>{try{await RN.users.update(u.id,body);toast(ok);renderUsers()}catch(e){toast(e.message);renderUsers()}};
+    d.querySelector("select").onchange=e=>patch({uloga:e.target.value||null},`Uloga za ${u.name} je sačuvana.`);
+    d.querySelector("[data-a]").onchange=e=>patch({isAdmin:e.target.checked},e.target.checked?`${u.name} je sada administrator.`:`${u.name} više nije administrator.`);
+    const x=d.querySelector("[data-x]");if(x)x.onclick=()=>{if(u.active&&!x.dataset.arm){x.dataset.arm=1;x.textContent="Potvrdi";setTimeout(()=>{if(x.isConnected){delete x.dataset.arm;x.textContent="Deaktiviraj"}},3000);return}patch({active:!u.active},u.active?`${u.name} je deaktiviran.`:`${u.name} je ponovo aktivan.`)};
+    d.querySelector("[data-p]").onclick=()=>{if(d.querySelector(".pw-row"))return;const r=document.createElement("div");r.className="pw-row";
+      r.innerHTML=`<input type="text" placeholder="Nova lozinka, bar 8 znakova" aria-label="Nova lozinka"><button type="button" class="btn sm pri">Sačuvaj</button>`;
+      r.querySelector("button").onclick=()=>patch({password:r.querySelector("input").value},`Lozinka za ${u.name} je promenjena.`);
+      d.appendChild(r);r.querySelector("input").focus()};
+    $("#uList").appendChild(d)});
+}
+$("#uAddBtn").onclick=()=>{$("#uForm").hidden=false;$("#nu_name").focus()};
+$("#nuCancel").onclick=()=>{$("#uForm").reset();$("#uForm").hidden=true;$("#nuMsg").textContent=""};
+$("#uForm").addEventListener("submit",async e=>{e.preventDefault();$("#nuMsg").textContent="";
+  try{const u=await RN.users.create({name:val("nu_name"),username:val("nu_user"),password:$("#nu_pass").value,uloga:val("nu_role")||null,isAdmin:$("#nu_admin").checked});
+    $("#uForm").reset();$("#uForm").hidden=true;toast(`Korisnik ${u.name} je dodat. Korisničko ime: ${u.username}`);renderUsers()}
+  catch(err){$("#nuMsg").textContent=err.message}});
+
+/* ---------- CSV ---------- */
+$("#csvBtn").onclick=async()=>{if(!downloads||!can("izvoz"))return;
+  const q=$("#q").value.trim().toLowerCase();
+  const rows=vis().filter(n=>(filt==="sve"||n.tip===filt)&&(!q||[n.broj,n.klijent?.naziv,n.vozilo?.reg,n.detalji?.imei,n.uredjaj?.imei,n.uredjaj?.iccid,n.uredjaj?.iccid2,n.rad?.serviser].join(" ").toLowerCase().includes(q)));
+  const H=["Broj","Vrsta posla","Datum","Klijent","PIB","Reg. oznaka","Marka i model","Serviser","Početak rada","Kraj rada","Trajanje rada (min)","Pauze (min)","Lokacija rada","Model GPS uređaja","Stanje GPS uređaja","IMEI","ICCID SIM1","Operater SIM1","ICCID SIM2","Operater SIM2","Dodatna oprema","Napomena"];
+  const c=v=>{v=String(v??"");return /[";\n\r]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v};
+  const lines=[H.join(";")].concat(rows.map(n=>{const r=n.rad||{};
+    return [n.broj,(TIP[n.tip]||TIP.ostalo).n,fmtD(r.datum),n.klijent?.naziv,n.klijent?.pib,n.vozilo?.reg,n.vozilo?.model,r.serviser,r.od,r.do,r.trajanjeMin??"",r.pauzeMin??"",n.lokacija?`${(+n.lokacija.lat).toFixed(6)}, ${(+n.lokacija.lng).toFixed(6)}`:"",n.uredjaj?.model||n.detalji?.uredjaj,n.uredjaj?.stanje,n.uredjaj?.imei||n.detalji?.imei,n.uredjaj?.iccid,n.uredjaj?.op1||n.detalji?.operater,n.uredjaj?.iccid2,n.uredjaj?.op2,[...(n.dodatna||[]).map(o=>[o.vrsta,o.model,o.stanje,o.sn&&("SN "+o.sn)].filter(Boolean).join(" ")),...(n.oprema||[]).map(o=>`${o.naziv} ${o.sn} x${o.kol}`)].join(", "),n.napomena].map(c).join(";")}));
+  try{await downloads.save({filename:`radni-nalozi-${new Date().toLocaleDateString("sv-SE")}.csv`,data:"﻿"+lines.join("\r\n")});toast(`Izvezeno ${rows.length} naloga.`)}catch(e){toast("Izvoz je otkazan.")}};
+
+/* ---------- settings ---------- */
+const CF=["naziv","pib","mb","tel","adresa","email","web"];
+let pendingLogo=null;
+function fillSettings(){
+  CF.forEach(k=>{const el=$("#c_"+k);if(el&&document.activeElement!==el)el.value=firma[k]||""});
+  const lid=pendingLogo?pendingLogo.id:firma.logoId;
+  $("#logoPrev").innerHTML=lid?`<img class="logo-prev" src="${pendingLogo?pendingLogo.url:BLOB+esc(lid)}" alt="Logo firme">`:`<span class="stat">Logo nije postavljen.</span>`;
+  $("#vidList").innerHTML=VID.map(([k,l])=>`<label class="chk"><input type="checkbox" id="vid_${k}" data-vid="${k}"${vidOn(k)?" checked":""}>${esc(l)}</label>`).join("");
+  $("#setRO").hidden=canEdit;
+  document.querySelectorAll("#v-podesavanja input,#v-podesavanja textarea,#v-podesavanja select").forEach(el=>el.disabled=!canEdit);
+  $("#cSave").hidden=!canEdit;$("#logoBtn").hidden=!(canEdit&&assets);
+}
+$("#logoIn").onchange=async e=>{const f=e.target.files[0];if(!f||!assets)return;$("#cMsg").textContent="";
+  try{const blob=f.type==="image/svg+xml"?f:await shrink(f,800,.92).catch(()=>f);const r=await assets.upload(blob,f.type==="image/svg+xml"?{type:"image/svg+xml"}:undefined);pendingLogo={id:r.id,url:r.url};fillSettings();$("#cMsg").style.color="var(--muted)";$("#cMsg").textContent="Logo je otpremljen. Sačuvajte podešavanja da bi se primenio."}
+  catch(err){$("#cMsg").style.color="";$("#cMsg").textContent="Logo nije otpremljen: "+(err.message||"greška")}};
+$("#pvOn").onclick=()=>{preview=$("#pvSel").value;applyRole();location.hash="#nalozi";window.scrollTo(0,0)};
+$("#pvOff").onclick=()=>{preview=false;applyRole();location.hash="#uloge"};
+$("#cSave").onclick=async()=>{if(!db)return;const d={...firma};CF.forEach(k=>d[k]=val("c_"+k));d.vidljivo={};document.querySelectorAll("#vidList input[data-vid]").forEach(i=>d.vidljivo[i.dataset.vid]=i.checked);if(pendingLogo)d.logoId=pendingLogo.id;
+  try{await db.doc("config/firma").set(d);firma=d;pendingLogo=null;renderBrand();applyRole();$("#cMsg").style.color="var(--ok)";$("#cMsg").textContent="Podešavanja su sačuvana."}
+  catch(e){$("#cMsg").style.color="";$("#cMsg").textContent="Čuvanje nije uspelo: "+(e.message||"nemate dozvolu")}};
+
+/* ---------- boot ---------- */
+resetForm();restoreDraft();klFormLoad(null);route();renderArchive();renderKlList();
+(async()=>{
+  const C=window.claude;
+  if(!C||!C.use){loaded=true;klLoaded=true;renderKlList();$("#list").innerHTML=`<div class="empty">Aplikacija nije ispravno učitana. Osvežite stranicu.</div>`;renderDetail();return}
+  [db,assets,downloads,user]=await Promise.all(["db","assets","downloads","user"].map(n=>C.use(n).catch(()=>null)));
+  try{canEdit=user?await user.canEdit():false}catch(e){canEdit=false}
+  try{myId=user?await user.id():null}catch(e){myId=null}
+  if(!db){loaded=true;klLoaded=true;renderKlList();$("#list").innerHTML=`<div class="empty">Arhiva nije dostupna. Prijavite se ponovo.</div>`;renderDetail();fillSettings();return}
+  let gotU=false,gotC=false;const ready=()=>{if(gotU&&gotC&&!roleKnown){roleKnown=true;applyRole()}};
+  setTimeout(()=>{if(!roleKnown){roleKnown=true;applyRole()}},10000);
+  db.doc("config/uloge").onSnapshot(s=>{if(s.exists&&(s.data().lista||[]).length)uloge=s.data();else uloge=DEF_ULOGE;rDraft=null;gotU=true;ready();if(roleKnown)applyRole();if(!$("#v-uloge").hidden)renderUloge()},()=>{gotU=true;ready()});
+  db.collection("clanovi").onSnapshot(s=>{clanovi={};s.docs.forEach(d=>clanovi[d.id]=d.data().uloga);gotC=true;ready();if(roleKnown)applyRole();renderUsers()},()=>{gotC=true;ready()});
+  db.doc("config/firma").onSnapshot(s=>{firma=s.exists?s.data():{};renderBrand();if(!$("#v-podesavanja").hidden)fillSettings();if(!$("#v-detalj").hidden)renderDetail()},()=>{});
+  const tmr=setTimeout(()=>{if(!loaded)$("#list").innerHTML=`<div class="empty">Arhiva se još ne učitava. Proverite internet vezu; podaci će se pojaviti čim veza proradi.</div>`},10000);
+  db.collection("klijenti").orderBy("naziv").limit(1000).onSnapshot(s=>{
+    klijenti=s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.naziv||"").localeCompare(b.naziv||"","sr"));
+    if(!s.metadata.fromCache)klLoaded=true;renderKlSelect();renderKlList();
+  },()=>{klLoaded=true;renderKlList()});
+  db.collection("nalozi").orderBy("createdAt","desc").limit(1000).onSnapshot(s=>{
+    nalozi=s.docs.map(d=>({id:d.id,...d.data()}));if(!s.metadata.fromCache){loaded=true;clearTimeout(tmr)}
+    renderArchive();if(!$("#v-detalj").hidden)renderDetail();
+  },e=>{clearTimeout(tmr);loaded=true;$("#list").innerHTML=`<div class="empty">Arhiva nije dostupna (${esc(e.code||"greška")}).</div>`});
+  fillSettings();
+})();
+})();
+</script>
+</body>
+</html>

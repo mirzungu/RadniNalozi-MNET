@@ -1,0 +1,8 @@
+Biblioteke u ovom folderu (sve dozvoljavaju komercijalnu upotrebu):
+- jsPDF 4.2.1 – MIT licenca – https://github.com/parallax/jsPDF
+- html2canvas 1.4.1 – MIT licenca – https://github.com/niklasvh/html2canvas
+- @zxing/library 0.21.3 – Apache 2.0 licenca – https://github.com/zxing-js/library
+- Leaflet 1.9.4 – BSD 2-Clause licenca – https://github.com/Leaflet/Leaflet
+Mapa: podaci © OpenStreetMap saradnici (ODbL). Pločice sa tile.openstreetmap.org su za umerenu upotrebu;
+za veći obim koristite sopstveni ili komercijalni server pločica (vidi README).
+- @supabase/supabase-js 2.118.0 – MIT licenca – https://github.com/supabase/supabase-js
