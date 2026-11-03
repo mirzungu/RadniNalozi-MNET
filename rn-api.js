@@ -42,14 +42,21 @@
   async function loadMe() {
     const { data: s } = await sb.auth.getSession();
     if (!s.session) return null;
-    const { data, error } = await sb.from("profiles").select("id,name,username,is_admin,uloga,active").eq("id", s.session.user.id).maybeSingle();
+    const { data, error } = await sb.from("profiles").select("id,name,username,is_admin,is_super,uloga,active,firma_id").eq("id", s.session.user.id).maybeSingle();
     if (error) {
       // bez interneta: radi sa poslednjim poznatim korisnikom
       if (/fetch|network/i.test(error.message || "")) { try { return JSON.parse(ls.get("rn_me") || "null"); } catch (e) { return null; } }
       return null;
     }
     if (!data || !data.active) { await sb.auth.signOut(); ls.set("rn_login_msg", "Ovaj nalog je deaktiviran."); return null; }
-    return { id: data.id, name: data.name, username: data.username, isAdmin: data.is_admin, uloga: data.uloga, email: s.session.user.email };
+    let f = null;
+    if (data.firma_id) { const r = await sb.from("firme").select("id,naziv,aktivna").eq("id", data.firma_id).maybeSingle(); f = r.data; }
+    if (!data.is_super) {
+      if (!f) { await sb.auth.signOut(); ls.set("rn_login_msg", "Vaš nalog još nije dodeljen nijednoj firmi. Javite se administratoru."); return null; }
+      if (!f.aktivna) { await sb.auth.signOut(); ls.set("rn_login_msg", "Pristup za firmu " + f.naziv + " je isključen. Javite se administratoru."); return null; }
+    }
+    return { id: data.id, name: data.name, username: data.username, isAdmin: data.is_admin || data.is_super, isSuper: data.is_super,
+             firma: data.firma_id, firmaNaziv: f ? f.naziv : "", uloga: data.uloga, email: s.session.user.email };
   }
 
   // ---------- prijava ----------
@@ -117,14 +124,99 @@
     const w = document.createElement("div");
     w.className = "um";
     w.innerHTML = '<button type="button" class="um-btn" id="umBtn" aria-haspopup="true" aria-expanded="false"></button>' +
-      '<div class="um-menu" id="umMenu" hidden><button type="button" id="umPass">Promeni lozinku</button><button type="button" id="umOut">Odjavi se</button></div>';
+      '<div class="um-menu" id="umMenu" hidden>' + (me.isSuper ? '<button type="button" id="umFirme">Firme…</button>' : "") +
+      '<button type="button" id="umPass">Promeni lozinku</button><button type="button" id="umOut">Odjavi se</button></div>';
+    if (me.isSuper) {
+      const fb = document.createElement("button");
+      fb.type = "button"; fb.className = "um-firma"; fb.id = "umFirma"; fb.title = "Promeni firmu";
+      fb.textContent = me.firmaNaziv || "Izaberite firmu";
+      fb.onclick = firmeDialog;
+      row.appendChild(fb);
+    }
     row.appendChild(w);
     const btn = w.querySelector("#umBtn"), menu = w.querySelector("#umMenu");
     btn.textContent = me.name || me.username;
+    if (me.isSuper) w.querySelector("#umFirme").onclick = () => { menu.hidden = true; firmeDialog(); };
     btn.onclick = () => { menu.hidden = !menu.hidden; btn.setAttribute("aria-expanded", String(!menu.hidden)); };
     document.addEventListener("click", (e) => { if (!w.contains(e.target)) menu.hidden = true; });
     w.querySelector("#umOut").onclick = logout;
     w.querySelector("#umPass").onclick = () => { menu.hidden = true; passwordDialog(); };
+  }
+
+  // ---------- glavni administrator: firme ----------
+  const escH = (v) => String(v == null ? "" : v).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+  async function firmeDialog() {
+    const box = document.createElement("div");
+    box.className = "overlay";
+    box.innerHTML = '<div class="sheet-panel firme-panel" role="dialog" aria-label="Firme"><div class="sec-h"><h2>Firme</h2><small>Vidi ih samo glavni administrator</small></div>' +
+      '<p class="stat" style="margin:0 0 10px">Trenutno radite u firmi <b>' + escH(me.firmaNaziv || "—") + '</b>. Klikom na <b>Uđi</b> prelazite u drugu firmu: vidite njene naloge, klijente, korisnike i podešavanja.</p>' +
+      '<div class="scroll"><table class="eq"><thead><tr><th>Firma</th><th>Korisnika</th><th>Klijenata</th><th>Naloga</th><th></th></tr></thead><tbody id="fmList"><tr><td colspan="5" class="stat">Učitavam…</td></tr></tbody></table></div>' +
+      '<div id="fmBez"></div>' +
+      '<form id="fmNova" novalidate style="margin-top:16px"><div class="sec-h"><h2>Nova firma</h2></div><div class="grid">' +
+      '<div class="f full"><label class="l req" for="fm_naziv">Naziv firme</label><input type="text" id="fm_naziv" placeholder="npr. Montetrack DOO"></div>' +
+      '<div class="f full"><span class="stat">Prvi administrator firme (može i kasnije):</span></div>' +
+      '<div class="f"><label class="l" for="fm_ime">Ime i prezime</label><input type="text" id="fm_ime"></div>' +
+      '<div class="f"><label class="l" for="fm_user">Korisničko ime</label><input type="text" id="fm_user" autocapitalize="none" placeholder="npr. marko.mt"></div>' +
+      '<div class="f"><label class="l" for="fm_pass">Početna lozinka (bar 8 znakova)</label><input type="text" id="fm_pass" autocomplete="off"></div>' +
+      '</div><div class="actions"><div class="msg" role="alert" id="fmMsg"></div><button type="button" class="btn" data-x>Zatvori</button><button type="submit" class="btn pri">Dodaj firmu</button></div></form></div>';
+    document.body.appendChild(box);
+    const close = () => box.remove();
+    box.querySelector("[data-x]").onclick = close;
+    box.addEventListener("click", (e) => { if (e.target === box) close(); });
+    const msg = box.querySelector("#fmMsg");
+    const say = (t, ok) => { msg.style.color = ok ? "var(--ok)" : ""; msg.textContent = t; };
+    let firme = [];
+    async function load() {
+      try { firme = chk(await sb.rpc("rn_firme_pregled")); }
+      catch (e) { box.querySelector("#fmList").innerHTML = '<tr><td colspan="5" class="stat">' + escH(e.message) + '</td></tr>'; return; }
+      box.querySelector("#fmList").innerHTML = firme.map((f) =>
+        '<tr' + (f.aktivna ? "" : ' style="opacity:.55"') + '><td><b>' + escH(f.naziv) + '</b>' + (f.id === me.firma ? ' <span class="stat">· trenutna</span>' : "") + (f.aktivna ? "" : ' <span class="stat">· isključena</span>') + '</td>' +
+        '<td>' + f.korisnika + '</td><td>' + f.klijenata + '</td><td>' + f.naloga + '</td><td style="white-space:nowrap">' +
+        (f.id === me.firma ? "" : '<button type="button" class="btn sm" data-udji="' + escH(f.id) + '">Uđi</button> ') +
+        '<button type="button" class="btn sm" data-akt="' + escH(f.id) + '" data-v="' + (f.aktivna ? "0" : "1") + '">' + (f.aktivna ? "Isključi" : "Uključi") + '</button></td></tr>').join("");
+      box.querySelectorAll("[data-udji]").forEach((b) => b.onclick = async () => {
+        b.disabled = true;
+        try { chk(await sb.rpc("rn_udji_u_firmu", { p_firma: b.dataset.udji })); ls.del("rn_me"); location.reload(); }
+        catch (e) { b.disabled = false; say(errMsg(e)); }
+      });
+      box.querySelectorAll("[data-akt]").forEach((b) => b.onclick = async () => {
+        const on = b.dataset.v === "1", f = firme.find((x) => x.id === b.dataset.akt);
+        if (!on && !confirm("Isključiti firmu " + f.naziv + "? Njeni korisnici neće moći da se prijave dok je ponovo ne uključite. Podaci ostaju sačuvani.")) return;
+        try { chk(await sb.from("firme").update({ aktivna: on }).eq("id", f.id)); load(); } catch (e) { say(errMsg(e)); }
+      });
+      // korisnici bez firme (npr. napravljeni direktno u Supabase-u)
+      let bez = [];
+      try { bez = chk(await sb.from("profiles").select("id,name,username").is("firma_id", null)); } catch (e) {}
+      const el = box.querySelector("#fmBez");
+      el.innerHTML = bez.length ? '<div class="sec-h" style="margin-top:16px"><h2>Korisnici bez firme</h2></div>' + bez.map((u) =>
+        '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:6px"><span style="flex:1;min-width:160px"><b>' + escH(u.name) + '</b> <span class="stat">' + escH((u.username || "").replace("@" + LOGIN_DOMAIN, "")) + '</span></span>' +
+        '<select data-bez="' + u.id + '" style="width:auto">' + firme.map((f) => '<option value="' + escH(f.id) + '">' + escH(f.naziv) + "</option>").join("") + '</select>' +
+        '<button type="button" class="btn sm" data-dodeli="' + u.id + '">Dodeli</button></div>').join("") : "";
+      el.querySelectorAll("[data-dodeli]").forEach((b) => b.onclick = async () => {
+        const fid = el.querySelector('[data-bez="' + b.dataset.dodeli + '"]').value;
+        try { chk(await sb.from("profiles").update({ firma_id: fid }).eq("id", b.dataset.dodeli)); say("Korisnik je dodeljen firmi. Ulogu mu podesite u toj firmi (Korisnici i uloge).", true); load(); }
+        catch (e) { say(errMsg(e)); }
+      });
+    }
+    box.querySelector("#fmNova").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const v = (id) => box.querySelector(id).value.trim();
+      const naziv = v("#fm_naziv"), ime = v("#fm_ime"), user = v("#fm_user"), pass = box.querySelector("#fm_pass").value;
+      if (!naziv) { say("Unesite naziv firme."); return; }
+      if ((ime || user || pass) && !(ime && user && pass.length >= 8)) { say("Za administratora unesite ime, korisničko ime i lozinku od bar 8 znakova, ili ostavite sva tri polja prazna."); return; }
+      const b = box.querySelector("#fmNova .pri"); b.disabled = true; say("");
+      try {
+        const fid = chk(await sb.rpc("rn_nova_firma", { p_naziv: naziv }));
+        let t = "Firma " + naziv + " je dodata.";
+        if (user) {
+          try { await users.create({ name: ime, username: user, password: pass, isAdmin: true, firma: fid }); t += " Administrator " + user + " može odmah da se prijavi."; }
+          catch (err) { t += " " + err.message; }
+        }
+        box.querySelector("#fmNova").reset(); say(t, true); load();
+      } catch (err) { say(errMsg(err)); }
+      finally { b.disabled = false; }
+    });
+    load();
   }
 
   function passwordDialog() {
@@ -159,7 +251,7 @@
   async function fetchCol(col) {
     if (col === "clanovi") {
       if (me.isAdmin) {
-        const rows = chk(await sb.from("profiles").select("id,uloga"));
+        const rows = chk(await sb.from("profiles").select("id,uloga").eq("firma_id", me.firma));
         return rows.filter((u) => u.uloga).map((u) => ({ id: u.id, data: { uloga: u.uloga } }));
       }
       return me.uloga ? [{ id: me.id, data: { uloga: me.uloga } }] : [];
@@ -310,8 +402,8 @@
   }
   const users = {
     async list() {
-      const rows = chk(await sb.from("profiles").select("id,name,username,is_admin,uloga,active,created_at").order("name"));
-      return rows.map((u) => ({ id: u.id, name: u.name, username: (u.username || "").replace("@" + LOGIN_DOMAIN, ""), isAdmin: u.is_admin, uloga: u.uloga, active: u.active }));
+      const rows = chk(await sb.from("profiles").select("id,name,username,is_admin,is_super,uloga,active,created_at").eq("firma_id", me.firma).order("name"));
+      return rows.filter((u) => !u.is_super || u.id === me.id).map((u) => ({ id: u.id, name: u.name, username: (u.username || "").replace("@" + LOGIN_DOMAIN, ""), isAdmin: u.is_admin, uloga: u.uloga, active: u.active }));
     },
     async update(id, patch) {
       if (patch.active !== undefined) {
@@ -329,14 +421,18 @@
       if (patch.name !== undefined) p.name = patch.name;
       if (Object.keys(p).length) chk(await sb.from("profiles").update(p).eq("id", id));
     },
-    async create({ name, username, password, uloga, isAdmin }) {
+    async create({ name, username, password, uloga, isAdmin, firma }) {
       let r;
-      try { r = await fn("rn-admin", { action: "create", login: username, name, password, uloga, isAdmin }); }
+      try { r = await fn("rn-admin", { action: "create", login: username, name, password, uloga, isAdmin, firma }); }
       catch (e) {
-        if (/nije dostupna/.test(e.message))
-          throw new Error("Novog korisnika napravite u Supabase-u: Authentication → Users → Add user (e-pošta npr. " +
-            (String(username || "ime").includes("@") ? username : (username || "ime") + "@" + LOGIN_DOMAIN) +
-            ", lozinka, ✔ Auto Confirm). Zatim mu ovde podesite ime i ulogu.");
+        if (/nije dostupna/.test(e.message)) {
+          // bez funkcije rn-admin: korisnik se pripremi, a nalog se pravi u Supabase-u i pri tome dobija firmu i ulogu
+          const email = toEmail(username || "ime");
+          chk(await sb.from("pozivnice").upsert({ email, firma_id: firma || me.firma, name: name || "", uloga: uloga || null, is_admin: !!isAdmin }));
+          throw new Error("Korisnik je pripremljen. Nalog još treba napraviti u Supabase-u: Authentication → Users → Add user, e-pošta " +
+            email + ", lozinka koju ste upisali, ✔ Auto Confirm. Pri tome automatski dobija firmu i ulogu." +
+            (me.isSuper ? "" : " To radi glavni administrator."));
+        }
         throw e;
       }
       return { name, username: r.login.replace("@" + LOGIN_DOMAIN, "") };
@@ -349,5 +445,11 @@
 
   const caps = { db, assets, downloads, user };
   window.claude = { use: (name) => session().then(() => caps[name] || null) };
-  window.RN = { me: () => me, blob: BLOB, logout, session, users, sendEmail, sb };
+  // status provere naloga (zeleno / žuto / crveno); vraća nove podatke naloga
+  async function provera(id, status, napomena) {
+    const d = chk(await sb.rpc("rn_provera", { p_id: id, p_status: status, p_napomena: napomena || null }));
+    refresh("nalozi");
+    return d;
+  }
+  window.RN = { me: () => me, blob: BLOB, logout, session, users, sendEmail, provera, sb };
 })();
