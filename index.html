@@ -623,14 +623,14 @@ const TIP={
   {k:"kvar",l:"Prijavljeni problem",t:"txt"},
   {k:"ishod",l:"Ishod",t:"sel",o:["Rešeno","Delimično rešeno","Nije rešeno – potrebna nova intervencija"]}]},
  premestanje:{n:"Premeštanje opreme",s:"Sa vozila na vozilo",c:"--t-pre",sec:"kl geo iv sig",iv:"premestanje",p:[
-  {k:"saVozila",l:"Sa vozila (reg. oznaka)",m:1,r:1},{k:"naVozilo",l:"Na vozilo (reg. oznaka)",m:1,r:1}]},
+  {k:"saVozila",l:"Sa vozila (reg. oznaka)",m:1,r:1},{k:"naVozilo",l:"Na vozilo (reg. oznaka)",m:1,r:1},
+  {k:"naKm",l:"Novo vozilo – kilometraža / radni sati",t:"num"},{k:"naJed",l:"Jedinica",t:"sel",o:["km","radni sati"]}]},
  kalibracija:{n:"Kalibracija",s:"Sonda ili RPM – tabela",c:"--t-kal",sec:"kl geo voz kal sig",p:[]},
  seoba:{n:"Seoba – NIS",s:"Aktivacija / deaktivacija postrojenja",c:"--t-seo",sec:"kl geo voz iv rez sig",iv:"seoba",nis:1,p:[
   {k:"smer",l:"Seoba",t:"sel",o:["Aktivacija","Deaktivacija"],r:1}]},
  rfid:{n:"RFID kartice",s:"Prodaja kartica klijentu",c:"--t-rf",sec:"kl sig",p:[
   {k:"kolicina",l:"Količina kartica",t:"num",r:1},{k:"frekv",l:"Frekvencija",t:"sel",o:["125 kHz","13,56 MHz"],r:1},{k:"brojevi",l:"Brojevi kartica (ako treba)",t:"txt"}]},
  prenos:{n:"Prenos opreme",s:"Predaja opreme drugom serviseru",c:"--t-mag",sec:"kol sig2",kol:"prenos",p:[]},
- popis:{n:"Popis opreme",s:"Popis opreme kod servisera",c:"--t-mag",sec:"kol",kol:"popis",p:[]},
  priprema:{n:"Priprema / provera opreme",s:"Rad u firmi, bez klijenta",c:"--t-mag",sec:"",p:[
   {k:"vrsta",l:"Posao",t:"sel",o:["Priprema opreme za ugradnju","Provera vraćene (polovne) opreme"],r:1},
   {k:"konfig",l:"Konfigurisanje uređaja",t:"sel",o:DN,r:1},{k:"instal",l:"Priprema instalacije",t:"sel",o:DN,r:1},
@@ -650,8 +650,8 @@ const VID=[["klLogo","Logo klijenta",1],["gpsModel","Model GPS uređaja",1],["im
  ["lokacija","Lokacija rada (koordinate)",1],["serviser","Ime servisera",1],["vreme","Radno vreme i trajanje",1],["pauze","Pauze",0],["napomena","Napomena",1],["foto","Fotografije",1]];
 const vidOn=k=>{const v=(firma.vidljivo||{})[k];return v===undefined?!!(VID.find(x=>x[0]===k)||[])[2]:!!v};
 let dView="klijent";
-const MODS=["Prodaja","Renta","Renta/kupovina"];
-const MOD_C={"Prodaja":"--mod-p","Renta":"--mod-r","Renta/kupovina":"--mod-rk"};
+const MODS=["Kupovina","Renta","Kupovina i renta"];
+const MOD_C={"Kupovina":"--mod-p","Renta":"--mod-r","Kupovina i renta":"--mod-rk"};
 const modTag=m=>m?`<span class="tag" style="--c:var(${MOD_C[m]||"--muted"});vertical-align:2px">${esc(m)}</span>`:"";
 const klMod=n=>((klijenti.find(k=>k.id===n.klijentId)||{}).mod)||n.klijent?.mod||"";
 const PROV={ok:["Obrađen","--ok","✓"],obrada:["U obradi","--warn","…"],dopuna:["Potrebna dopuna","--danger","!"]};
@@ -881,7 +881,7 @@ const exTxt=ex=>Object.entries(ex||{}).map(([k,v])=>k+": "+v).join(", ");
 /* ---------- intervencije (servis) ---------- */
 // Vlasništvo opreme: M = kompanije (skinuto se vraća u magacin polovne robe), K = klijentova (ostaje klijentu)
 const VL={M:"M – naša",K:"K – klijent"};
-function vlDef(){const k=klijenti.find(x=>x.id===$("#k_sel").value);const m=k&&k.mod;return m==="Prodaja"?"K":m==="Renta"?"M":""}
+function vlDef(){const k=klijenti.find(x=>x.id===$("#k_sel").value);const m=k&&k.mod;return m==="Kupovina"?"K":m==="Renta"?"M":""}
 const vlSeg=(name,val)=>`<div class="seg" role="radiogroup">${Object.entries(VL).map(([k,l])=>`<label class="chk"><input type="radio" name="${name}" value="${k}"${val===k?" checked":""}>${l}</label>`).join("")}</div>`;
 const RADNJE=[["zamena","Zamena","neispravna oprema se menja drugom"],["servis","Servis","uspešna popravka, bez zamene"],["instalacija","Instalacija","kabl, napajanje, baterija"],["rekonf","Rekonfiguracija","podešavanje, parametri"],["demontaza","Demontaža","skidanje bez zamene"],["ugradnja","Dodatna ugradnja","nova oprema uz postojeću"]];
 const RADNJA={...Object.fromEntries(RADNJE.map(r=>[r[0],r[1]])),premestanje:"Premeštanje",seoba:"Seoba"};
@@ -1300,7 +1300,7 @@ async function doSave(){const msg=$("#fMsg");msg.textContent="";
     else{if(!timer.nid){timer.nid="rn"+Date.now().toString(36);saveDraft()}id=timer.nid;broj=""}
     const doc={broj,tip,createdAt:editId?editOrig.createdAt:Date.now(),
       klijent:!S.has("kl")?{naziv:""}:{naziv:val("k_naziv"),pib:val("k_pib"),adresa:((klijenti.find(x=>x.id===$("#k_sel").value)||{}).adresa)||"",logoId:((klijenti.find(x=>x.id===$("#k_sel").value)||{}).logoId)||"",mod:((klijenti.find(x=>x.id===$("#k_sel").value)||{}).mod)||""},klijentId:S.has("kl")&&$("#k_sel").value||"",
-      vozilo:!S.has("voz")?{reg:tip==="premestanje"?val("d_naVozilo").toUpperCase():""}:{reg:val("v_reg").toUpperCase(),model:val("v_model"),vin:val("v_vin").toUpperCase(),km:val("v_km"),jed:val("v_jed")||"km"},
+      vozilo:!S.has("voz")?(tip==="premestanje"?{reg:val("d_naVozilo").toUpperCase(),km:val("d_naKm"),jed:val("d_naJed")==="radni sati"?"h":"km"}:{reg:""}):{reg:val("v_reg").toUpperCase(),model:val("v_model"),vin:val("v_vin").toUpperCase(),km:val("v_km"),jed:val("v_jed")||"km"},
       intervencije,
       kalibracija:S.has("kal")?kalData():undefined,kolicine:S.has("kol")?kolData():undefined,rezervoari:S.has("rez")?rezData():undefined,
       uredjaj:(S.has("iv")&&!gpsOn)?(sv?ivUredjaj(intervencije):{}):!gpsOn?{}:{vl:($("#u_vl input:checked")||{}).value||"",model:val("u_model"),sifra:sifraZa("GPS uređaj",val("u_model"),($("#u_stanje input:checked")||{}).value),stanje:($("#u_stanje input:checked")||{}).value||"",imei:val("u_imei"),iccid:val("u_iccid").toUpperCase(),op1:val("u_op1"),iccid2:val("u_iccid2").toUpperCase(),op2:val("u_iccid2")?val("u_op2"):""},
@@ -1602,6 +1602,7 @@ async function renderUsers(){
     d.innerHTML=`<div class="nm"><b></b><small></small></div>
       <select aria-label="Uloga"${u.isAdmin?" disabled":""}>${roleOpts(u.uloga||"")}</select>
       <label class="chk"><input type="checkbox" data-a${u.isAdmin?" checked":""}${u.id===myId?" disabled":""}>Admin</label>
+      <button type="button" class="btn sm" data-n>Promeni ime</button>
       <button type="button" class="btn sm" data-p>Nova lozinka</button>
       ${u.id===myId?"":`<button type="button" class="btn sm${u.active?" dng":""}" data-x>${u.active?"Deaktiviraj":"Aktiviraj"}</button>`}`;
     d.querySelector("b").textContent=u.name;
@@ -1610,7 +1611,13 @@ async function renderUsers(){
     d.querySelector("select").onchange=e=>patch({uloga:e.target.value||null},`Uloga za ${u.name} je sačuvana.`);
     d.querySelector("[data-a]").onchange=e=>patch({isAdmin:e.target.checked},e.target.checked?`${u.name} je sada administrator.`:`${u.name} više nije administrator.`);
     const x=d.querySelector("[data-x]");if(x)x.onclick=()=>{if(u.active&&!x.dataset.arm){x.dataset.arm=1;x.textContent="Potvrdi";setTimeout(()=>{if(x.isConnected){delete x.dataset.arm;x.textContent="Deaktiviraj"}},3000);return}patch({active:!u.active},u.active?`${u.name} je deaktiviran.`:`${u.name} je ponovo aktivan.`)};
-    d.querySelector("[data-p]").onclick=()=>{if(d.querySelector(".pw-row"))return;const r=document.createElement("div");r.className="pw-row";
+    d.querySelector("[data-n]").onclick=()=>{if(d.querySelector(".nm-row"))return;const r=document.createElement("div");r.className="pw-row nm-row";
+      r.innerHTML=`<input type="text" placeholder="Ime i prezime" aria-label="Ime i prezime"><button type="button" class="btn sm pri">Sačuvaj ime</button>`;
+      const inp=r.querySelector("input");inp.value=u.name||"";
+      const go=()=>{const v=inp.value.trim();if(!v){toast("Upišite ime i prezime.");return}patch({name:v},`Ime je promenjeno u „${v}”.`)};
+      r.querySelector("button").onclick=go;inp.addEventListener("keydown",e=>{if(e.key==="Enter")go()});
+      d.appendChild(r);inp.focus();inp.select()};
+    d.querySelector("[data-p]").onclick=()=>{if(d.querySelector(".pw-row:not(.nm-row)"))return;const r=document.createElement("div");r.className="pw-row";
       r.innerHTML=`<input type="text" placeholder="Nova lozinka, bar 8 znakova" aria-label="Nova lozinka"><button type="button" class="btn sm pri">Sačuvaj</button>`;
       r.querySelector("button").onclick=()=>patch({password:r.querySelector("input").value},`Lozinka za ${u.name} je promenjena.`);
       d.appendChild(r);r.querySelector("input").focus()};
