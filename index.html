@@ -88,6 +88,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .eq td{padding:0 6px 6px 0;vertical-align:top}
 .eq td:last-child{width:36px;padding-right:0}
 .eq input{padding:7px 8px}
+.big-new{width:100%;justify-content:center;font-size:20px;padding:18px;margin:4px 0 18px;border-radius:8px}.big-new span{font-size:26px;line-height:1}
 .ord{list-style:none;margin:0;padding:0;display:grid;gap:6px;max-width:520px}.ord li{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:5px;padding:6px 8px;background:var(--bg)}.ord li .nm{flex:1;font-weight:600}.ord li .no{width:22px;color:var(--muted);font-variant-numeric:tabular-nums}.ord li .xbtn:disabled{opacity:.3;cursor:default}
 .xbtn{appearance:none;border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:5px;width:34px;height:36px;cursor:pointer;font-size:18px;line-height:1}
 .scroll{overflow-x:auto}
@@ -130,7 +131,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .prov textarea{width:100%;min-height:60px;margin:8px 0}
 .prov .pvbig{display:flex;gap:6px;flex-wrap:wrap}
 .prov .pvbig .btn[aria-pressed="true"]{background:var(--pc);border-color:var(--pc);color:#fff}
-.dopuna-ban{display:block;width:100%;text-align:left;border:1px solid var(--danger);background:color-mix(in srgb,var(--danger) 10%,var(--surface));color:var(--ink);border-radius:6px;padding:10px 14px;margin-bottom:12px;font:inherit;cursor:pointer}
+.dopuna-ban{text-decoration:none;display:block;width:100%;text-align:left;border:1px solid var(--danger);background:color-mix(in srgb,var(--danger) 10%,var(--surface));color:var(--ink);border-radius:6px;padding:10px 14px;margin-bottom:12px;font:inherit;cursor:pointer}
 .row .no{font-family:var(--f-mono);font-size:13px}
 .row .mid{min-width:0}
 .row .mid b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -269,7 +270,8 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
     </div>
   </div>
   <nav aria-label="Glavni meni">
-    <a href="#nalozi" data-v="arhiva">Nalozi</a>
+    <a href="#nalozi" data-v="arhiva" id="navNal">Nalozi</a>
+    <a href="#moji" data-v="moji" id="navMoji" hidden>Moji nalozi</a>
     <a href="#klijenti" data-v="klijenti" id="navKl" hidden>Klijenti</a>
     <a href="#uloge" data-v="uloge" data-admin hidden>Korisnici i uloge</a>
     <a href="#podesavanja" data-v="podesavanja" data-admin hidden>Podešavanja</a>
@@ -428,11 +430,12 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 
 <!-- ========== ARHIVA ========== -->
 <section id="v-arhiva" hidden>
-  <h1>Radni nalozi</h1>
-  <p class="lead">Novi nalog otvarate dugmetom <b>+</b> dole desno.</p>
+  <h1 id="arhT">Radni nalozi</h1>
+  <p class="lead" id="arhLead">Novi nalog otvarate dugmetom <b>+</b> dole desno.</p>
+  <button type="button" class="btn pri big-new" id="bigNew" hidden><span aria-hidden="true">+</span> Novi radni nalog</button>
   <div id="draftNote"></div><p class="limit-note" id="limitNote" hidden></p><div id="dopBan"></div>
-  <div class="toolbar"><input type="search" id="q" placeholder="Pretraga: broj, klijent, registracija, IMEI, serviser" aria-label="Pretraga"><button class="btn" id="csvBtn" hidden>Izvezi u Excel (CSV)</button></div>
-  <div class="toolbar per">
+  <div class="toolbar adv"><input type="search" id="q" placeholder="Pretraga: broj, klijent, registracija, IMEI, serviser" aria-label="Pretraga"><button class="btn" id="csvBtn" hidden>Izvezi u Excel (CSV)</button></div>
+  <div class="toolbar per adv">
     <select id="perSel" aria-label="Period"><option value="sve">Sav period</option><option value="danas">Danas</option><option value="juce">Juče</option><option value="ned">Ova nedelja</option><option value="pned">Prošla nedelja</option><option value="mes">Ovaj mesec</option><option value="pmes">Prošli mesec</option><option value="god">Ova godina</option><option value="custom">Izaberi period…</option></select>
     <span class="per-c" id="perC" hidden><label class="stat" for="perOd">od</label><input type="date" id="perOd"><label class="stat" for="perDo">do</label><input type="date" id="perDo"></span>
     <select id="srvSel" aria-label="Serviser"><option value="">Svi serviseri</option></select>
@@ -440,7 +443,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
     <select id="provSel" aria-label="Status provere"><option value="">Svi statusi</option><option value="none">Neprovereni</option><option value="obrada">U obradi (žuto)</option><option value="dopuna">Potrebna dopuna (crveno)</option><option value="ok">Obrađeni (zeleno)</option></select>
     <button type="button" class="btn sm" id="perClr" hidden>Poništi filtere</button>
   </div>
-  <div class="filters" id="filters"></div>
+  <div class="filters adv" id="filters"></div>
   <div class="count" id="count"></div>
   <div class="list" id="list"><div class="empty">Učitavanje naloga…</div></div>
   <button class="fab" id="fab" aria-label="Novi radni nalog"><svg viewBox="0 0 24 24" width="30" height="30" aria-hidden="true"><path d="M12 4v16M4 12h16" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" fill="none"/></svg></button>
@@ -656,15 +659,15 @@ const modTag=m=>m?`<span class="tag" style="--c:var(${MOD_C[m]||"--muted"});vert
 const klMod=n=>((klijenti.find(k=>k.id===n.klijentId)||{}).mod)||n.klijent?.mod||"";
 const PROV={ok:["Obrađen","--ok","✓"],obrada:["U obradi","--warn","…"],dopuna:["Potrebna dopuna","--danger","!"]};
 const provS=n=>(n.provera&&PROV[n.provera.s])?n.provera.s:"";
-const PRAVA=[["nalogNovi","Pravi nove radne naloge"],["pdf","Preuzima PDF naloga"],["brisanje","Briše naloge"],["izvoz","Izvozi naloge u Excel (CSV)"],["klijentiVidi","Vidi karticu Klijenti"],["klijentiMenja","Dodaje i menja klijente"],["pdfInterni","Vidi interni nalog (sve tehničke podatke)"],["izmena","Menja zatvorene naloge"],["provera","Proverava naloge (zeleno / žuto / crveno)"]];
+const PRAVA=[["nalogNovi","Pravi nove radne naloge"],["pdf","Preuzima PDF naloga"],["brisanje","Briše naloge"],["izvoz","Izvozi naloge u Excel (CSV)"],["klijentiVidi","Vidi karticu Klijenti"],["klijentiMenja","Dodaje i menja klijente"],["pdfInterni","Vidi interni nalog (sve tehničke podatke)"],["izmena","Menja zatvorene naloge"],["provera","Proverava naloge (zeleno / žuto / crveno)"],["pretraga","Pretraga, filteri i cela arhiva (bez toga: jednostavan prikaz – danas i moji nalozi)"]];
 const VIDI={ne:"Ne vidi arhivu",svoje:"Samo svoje naloge",sve:"Sve naloge"};
 const DANI=[[1,"1 dan"],[3,"3 dana"],[7,"7 dana"],[14,"14 dana"],[30,"30 dana"],[60,"60 dana"],[90,"90 dana"],[365,"godinu dana"],[0,"bez ograničenja"]];
 const DEF_ULOGE={def:"serviser",lista:[
- {id:"serviser",naziv:"Serviser",vidi:"sve",dana:30,prava:{nalogNovi:1,pdf:1}},
- {id:"korisnik",naziv:"Korisnik",vidi:"sve",dana:30,prava:{pdf:1}},
- {id:"finansije",naziv:"Finansije",vidi:"sve",dana:0,prava:{pdf:1,izvoz:1,klijentiVidi:1}},
- {id:"prodaja",naziv:"Prodaja",vidi:"sve",dana:90,prava:{pdf:1,klijentiVidi:1,klijentiMenja:1}},
- {id:"provera",naziv:"Provera",vidi:"sve",dana:0,prava:{provera:1,pdf:1,pdfInterni:1,klijentiVidi:1}}]};
+ {id:"serviser",naziv:"Serviser",vidi:"svoje",dana:30,prava:{nalogNovi:1,pdf:1}},
+ {id:"korisnik",naziv:"Korisnik",vidi:"sve",dana:30,prava:{pdf:1,pretraga:1}},
+ {id:"finansije",naziv:"Finansije",vidi:"sve",dana:0,prava:{pdf:1,izvoz:1,klijentiVidi:1,pretraga:1}},
+ {id:"prodaja",naziv:"Prodaja",vidi:"sve",dana:90,prava:{pdf:1,klijentiVidi:1,klijentiMenja:1,pretraga:1}},
+ {id:"provera",naziv:"Provera",vidi:"sve",dana:0,prava:{provera:1,pdf:1,pdfInterni:1,klijentiVidi:1,pretraga:1}}]};
 let uloge=DEF_ULOGE,clanovi={},myId=null;
 const isAdmin=()=>canEdit&&!preview;
 function curRole(){const L=uloge.lista||[];const id=preview||clanovi[myId]||uloge.def;return L.find(r=>r.id===id)||L.find(r=>r.id===uloge.def)||L[0]||{naziv:"",vidi:"ne",dana:0,prava:{}}}
@@ -688,16 +691,21 @@ let tip="ugradnja";let photos=[];let sigInk=false;let curId=null;let filt="sve";
 
 /* ---------- routing ---------- */
 let formOpen=false,chMode="new";
+// jednostavan prikaz (uloga bez prava „pretraga"): početna = današnji nalozi, „Moji nalozi" = svi moji u periodu uloge
+const prost=()=>roleKnown&&!can("pretraga");let listMode="sve";
 function route(keep){
   const h=(location.hash||"#nalozi").slice(1);
+  listMode=prost()?(h==="moji"?"moji":"danas"):"sve";
   if(h==="novi"&&roleKnown&&!can("nalogNovi")&&!editId){history.replaceState(null,"","#nalozi");route(keep);return}
   if(h==="novi"&&!formOpen){history.replaceState(null,"","#nalozi");route();openChooser("new");return}
   let v=h.startsWith("n-")?"detalj":({novi:"novi",klijenti:"klijenti",podesavanja:"podesavanja",uloge:"uloge"}[h]||"arhiva");
+  if(h==="moji"&&!prost()&&roleKnown)history.replaceState(null,"","#nalozi");
   if(((v==="podesavanja"||v==="uloge")&&!isAdmin())||(v==="klijenti"&&!can("klijentiVidi"))){if(roleKnown){history.replaceState(null,"","#nalozi")}v="arhiva"}
   ["novi","arhiva","detalj","klijenti","podesavanja","uloge"].forEach(x=>$("#v-"+x).hidden=x!==v);
-  const nv=v==="detalj"||v==="novi"?"arhiva":v;
+  const nv=v==="arhiva"&&listMode==="moji"?"moji":v==="detalj"||v==="novi"?"arhiva":v;
   document.querySelectorAll("nav a").forEach(a=>{if(a.dataset.v===nv)a.setAttribute("aria-current","page");else a.removeAttribute("aria-current")});
-  $("#fab").hidden=v!=="arhiva"||!roleKnown||!can("nalogNovi");
+  $("#fab").hidden=v!=="arhiva"||!roleKnown||!can("nalogNovi")||prost();
+  if(v==="arhiva"){applyListMode();renderArchive()}
   if(v==="uloge")renderUloge();
   if(v==="detalj"){curId=h.slice(2);renderDetail()}
   if(v==="podesavanja")fillSettings();
@@ -1409,9 +1417,25 @@ $("#list").addEventListener("click",e=>{const b=e.target.closest(".pvb");if(!b)r
   if(st==="dopuna"){pvFocus=true;location.hash="#n-"+n.id;return}   // za dopunu treba napomena: otvara se nalog
   setProv(n.id,st)});
 let pvFocus=false;
+function rowHtml(n){const t=TIP[n.tip]||TIP.ostalo;return `<a class="row" href="#n-${esc(n.id)}" style="--c:var(${t.c})"><span class="no">${esc(n.broj)}</span><span class="mid"><b>${esc(nTitle(n))} ${modTag(klMod(n))}${n.tip==="test"?` <span class="tag" style="--c:var(--t-test);vertical-align:2px">${n.testIshod?"Test · "+esc(n.testIshod):"Test u toku"}</span>`:""}${(n.intervencije||[]).some(o=>o.manip)?' <span class="tag" style="--c:var(--danger);vertical-align:2px" title="Oštećenje usled manipulacije – naplatiti klijentu">Naplata</span>':""}</b><span>${n.vozilo?.reg?`<span class="mono">${esc(n.vozilo.reg)}</span> · `:""}${esc(n.rad?.serviser)}</span></span><span class="dt"><span class="tag">${t.n}${n.tip==="seoba"&&n.detalji?.smer?" · "+esc(n.detalji.smer):""}</span><br>${fmtD(n.rad?.datum)}</span>${pvRow(n)}</a>`}
+function applyListMode(){const p=listMode!=="sve";
+  document.querySelectorAll("#v-arhiva .adv").forEach(e=>e.hidden=p);
+  $("#navMoji").hidden=!prost();$("#navNal").textContent=prost()?"Danas":"Nalozi";
+  $("#bigNew").hidden=!(listMode==="danas"&&can("nalogNovi"));
+  const d=+curRole().dana||0;
+  $("#arhT").textContent=listMode==="danas"?"Današnji nalozi":listMode==="moji"?"Moji nalozi":"Radni nalozi";
+  $("#arhLead").innerHTML=listMode==="danas"?"Nalozi od danas. Starije naloge vidite u kartici <b>Moji nalozi</b>.":listMode==="moji"?(d?`Vaši nalozi ${daniTxt(d)}.`:"Svi vaši nalozi."):"Novi nalog otvarate dugmetom <b>+</b> dole desno.";
+  if(p)$("#limitNote").hidden=true}
+$("#bigNew").onclick=()=>openChooser("new");
 function renderArchive(){
   renderFilters();
   if(!loaded&&!nalozi.length)return;
+  if(listMode!=="sve"){const td=ymd(new Date());let rows=vis();if(listMode==="danas")rows=rows.filter(n=>nDatum(n)===td);
+    rows=[...rows].sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+    const moje=vis().filter(n=>provS(n)==="dopuna"&&n.createdBy===myId);
+    $("#dopBan").innerHTML=moje.length?`<a class="dopuna-ban" href="#moji"><b>${moje.length===1?"1 vaš nalog traži":moje.length+" vaših naloga traže"} dopunu.</b> Otvorite ga u kartici Moji nalozi (crvena tačka).</a>`:"";
+    $("#count").textContent=rows.length?`${rows.length} ${rows.length===1?"nalog":"naloga"}`:"";
+    $("#list").innerHTML=rows.length?rows.map(rowHtml).join(""):`<div class="empty">${listMode==="danas"?"Danas još nemate naloga.":"Nemate naloga u ovom periodu."}</div>`;return}
   const q=$("#q").value.trim().toLowerCase();
   const rows=visF().filter(n=>(filt==="sve"||n.tip===filt)&&(!q||[n.broj,n.klijent?.naziv,nTitle(n),...((n.kolicine?.stavke)||[]).map(o=>o.oprema+" "+o.sn),n.kalibracija?.sn,n.vozilo?.reg,n.detalji?.imei,n.uredjaj?.imei,n.uredjaj?.iccid,n.uredjaj?.iccid2,n.detalji?.saVozila,n.detalji?.naVozilo,n.rad?.serviser,n.uredjaj?.model,...(n.dodatna||[]).map(o=>o.vrsta+" "+o.model+" "+o.sn),...(n.oprema||[]).map(o=>o.sn),...(n.intervencije||[]).map(o=>[o.oprema,o.sk?.id,o.sk?.iccid,o.nv?.id,o.nv?.iccid,o.nv?.iccid2,o.manip?"naplata manipulacija":""].join(" "))].join(" ").toLowerCase().includes(q)));
   const moje=vis().filter(n=>provS(n)==="dopuna"&&n.createdBy===myId);
@@ -1419,7 +1443,7 @@ function renderArchive(){
   if($("#dopBtn"))$("#dopBtn").onclick=()=>{$("#provSel").value="dopuna";renderArchive()};
   $("#count").textContent=rows.length?`${rows.length} ${rows.length===1?"nalog":"naloga"}`:"";
   if(!rows.length){$("#list").innerHTML=`<div class="empty">${vis().length?"Nijedan nalog ne odgovara pretrazi ili izabranom periodu.":(nalozi.length?"Nema naloga u periodu koji vidite.":"Još nema sačuvanih naloga. Prvi nalog napravite dugmetom +.")}</div>`;return}
-  $("#list").innerHTML=rows.map(n=>{const t=TIP[n.tip]||TIP.ostalo;return `<a class="row" href="#n-${esc(n.id)}" style="--c:var(${t.c})"><span class="no">${esc(n.broj)}</span><span class="mid"><b>${esc(nTitle(n))} ${modTag(klMod(n))}${n.tip==="test"?` <span class="tag" style="--c:var(--t-test);vertical-align:2px">${n.testIshod?"Test · "+esc(n.testIshod):"Test u toku"}</span>`:""}${(n.intervencije||[]).some(o=>o.manip)?' <span class="tag" style="--c:var(--danger);vertical-align:2px" title="Oštećenje usled manipulacije – naplatiti klijentu">Naplata</span>':""}</b><span>${n.vozilo?.reg?`<span class="mono">${esc(n.vozilo.reg)}</span> · `:""}${esc(n.rad?.serviser)}</span></span><span class="dt"><span class="tag">${t.n}${n.tip==="seoba"&&n.detalji?.smer?" · "+esc(n.detalji.smer):""}</span><br>${fmtD(n.rad?.datum)}</span>${pvRow(n)}</a>`}).join("");
+  $("#list").innerHTML=rows.map(rowHtml).join("");
 }
 
 /* ---------- sheet (detail + pdf) ---------- */
