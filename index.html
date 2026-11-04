@@ -176,6 +176,20 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .s-tbl th,.s-tbl td{border:1px solid var(--sl);padding:4px 6px;text-align:left}
 .s-tbl th{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--sm);font-weight:600}
 .s-ph{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:6px;margin-bottom:10px}
+#dBody .s-ph img{cursor:zoom-in}
+.lb{position:fixed;inset:0;z-index:70;background:#080c10;display:flex;flex-direction:column;color:#fff;padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px)}
+.lb-on{overflow:hidden}
+.lb-top{display:flex;align-items:center;gap:8px;padding:10px 12px;flex-wrap:wrap}.lb-sp{flex:1}.lb-c{font-weight:700;font-variant-numeric:tabular-nums}
+.lb-top .btn{background:transparent;color:#fff;border-color:rgba(255,255,255,.35);text-decoration:none}
+.lb-st{flex:1;min-height:0;position:relative;display:flex;align-items:center;justify-content:center;overflow:auto}
+.lb-i{max-width:100%;max-height:100%;object-fit:contain;cursor:zoom-in;user-select:none}
+.lb-i.zoom{max-width:none;max-height:none;cursor:zoom-out}
+.lb-st:has(.lb-i.zoom){align-items:flex-start;justify-content:flex-start}
+.lb-n{position:absolute;top:50%;transform:translateY(-50%);width:48px;height:64px;border:0;border-radius:8px;background:rgba(255,255,255,.12);color:#fff;font-size:40px;line-height:1;cursor:pointer;z-index:2}
+.lb-n:hover{background:rgba(255,255,255,.22)}.lb-p{left:10px}.lb-nx{right:10px}
+.lb-th{display:flex;gap:6px;padding:10px 12px;overflow-x:auto}
+.lb-th button{flex:none;width:72px;height:54px;padding:0;border:2px solid transparent;border-radius:4px;background:none;cursor:pointer;opacity:.6}
+.lb-th button.on{border-color:#fff;opacity:1}.lb-th img{width:100%;height:100%;object-fit:cover;display:block;border-radius:2px}
 .s-ph img{width:100%;aspect-ratio:4/3;object-fit:cover;border:1px solid var(--sl);display:block}
 .s-sign{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:16px}
 .s-sign .box{border-bottom:1px solid var(--ink);height:80px;display:flex;align-items:flex-end;justify-content:center}
@@ -273,6 +287,14 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .ut-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border-left:5px solid var(--c);border-top:1px solid var(--line)}
 .ut-row:first-of-type{border-top:0}.ut-row .mid{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
 .ut-row .mid b{overflow-wrap:anywhere}.ut-row .mid span{font-size:13px;color:var(--muted)}
+.utoku.mine{border-color:var(--vis)}.utoku.mine .ut-h{color:var(--ink)}
+.ut-row .btn.sm{flex:none}
+.busy-act{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.srv-chips{display:flex;flex-wrap:wrap;gap:6px}.srv-chips:not(:empty){margin-bottom:8px}
+.chip-x{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--line);background:var(--bg);border-radius:999px;padding:4px 4px 4px 12px;font-size:14px;font-weight:600}
+.chip-x button{appearance:none;border:0;background:transparent;color:var(--muted);font-size:18px;line-height:1;width:26px;height:26px;border-radius:50%;cursor:pointer}
+.chip-x button:hover{background:var(--line);color:var(--ink)}
+@media (max-width:639px){.ut-row{flex-wrap:wrap}.ut-row .mid{flex-basis:100%}}
 .ut-st{font-size:12px;font-weight:700;padding:3px 8px;border-radius:999px;white-space:nowrap;color:var(--muted);border:1px solid var(--line)}
 .ut-st.run{color:var(--ok);border-color:var(--ok)}.ut-st.pz{color:var(--warn);border-color:var(--warn)}
 @media (prefers-reduced-motion:reduce){.ut-dot{animation:none}}
@@ -437,6 +459,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
       <div class="grid">
         <div class="f"><label class="l req" for="r_datum">Datum</label><input type="date" id="r_datum" data-req></div>
         <div class="f"><label class="l req" for="r_serviser">Serviser</label><input type="text" id="r_serviser" data-req></div>
+        <div class="f full"><label class="l" for="srvAdd">Ostali serviseri na nalogu</label><div class="srv-chips" id="srvChips"></div><select id="srvAdd"></select></div>
       </div>
     </div>
 
@@ -462,6 +485,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
     <div class="actions">
       <div class="msg" id="fMsg" role="alert"></div>
       <button type="button" class="btn" id="fReset">Odbaci nalog</button>
+      <button type="button" class="btn" id="fPark" hidden title="Nalog ostaje otvoren, vreme i dalje teče; vratite mu se sa početne strane">Sačuvaj i izađi (vreme teče)</button>
       <button type="submit" class="btn pri" id="fSave">Stop i zatvori nalog</button>
     </div>
   </form>
@@ -542,6 +566,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       <div class="seg" id="dSeg" role="radiogroup" aria-label="Prikaz naloga" hidden><label class="chk"><input type="radio" name="dview" id="dv_i" value="interni" checked>Interni</label><label class="chk"><input type="radio" name="dview" id="dv_k" value="klijent">Nalog za klijenta</label></div>
       <button class="btn pri" id="dPdf">Preuzmi PDF</button>
+      <button class="btn" id="dFoto" hidden>Fotografije</button>
       <button class="btn" id="dMail" hidden>Pošalji mejlom</button>
       <button class="btn" id="dEdit" hidden>Izmeni nalog</button>
       <button class="btn dng" id="dDel" hidden>Obriši</button>
@@ -715,7 +740,7 @@ const isAdmin=()=>canEdit&&!preview;
 function curRole(){const L=uloge.lista||[];const id=preview||clanovi[myId]||uloge.def;return L.find(r=>r.id===id)||L.find(r=>r.id===uloge.def)||L[0]||{naziv:"",vidi:"ne",dana:0,prava:{}}}
 const can=k=>isAdmin()||!!(curRole().prava||{})[k];
 const daniTxt=d=>d===1?"od poslednjeg dana":`iz poslednjih ${d} dana`;
-function vis(){if(isAdmin())return nalozi;const r=curRole();if(r.vidi==="ne")return[];let a=r.vidi==="svoje"?nalozi.filter(n=>myId&&n.createdBy===myId):nalozi;const d=+r.dana||0;if(d){const od=Date.now()-d*864e5;a=a.filter(n=>(n.createdAt||0)>=od)}return a}
+function vis(){if(isAdmin())return nalozi;const r=curRole();if(r.vidi==="ne")return[];let a=r.vidi==="svoje"?nalozi.filter(n=>myId&&(n.createdBy===myId||(n.rad?.serviseriId||[]).includes(myId))):nalozi;const d=+r.dana||0;if(d){const od=Date.now()-d*864e5;a=a.filter(n=>(n.createdAt||0)>=od)}return a}
 function applyRole(){
   const adm=isAdmin(),r=curRole();
   document.querySelectorAll("nav a[data-admin]").forEach(a=>a.hidden=!adm);
@@ -739,7 +764,7 @@ function route(keep){
   const h=(location.hash||"#nalozi").slice(1);
   listMode=prost()?(h==="moji"?"moji":"danas"):"sve";
   if(h==="novi"&&roleKnown&&!can("nalogNovi")&&!editId){history.replaceState(null,"","#nalozi");route(keep);return}
-  if(h==="novi"&&!formOpen){history.replaceState(null,"","#nalozi");route();openChooser("new");return}
+  if(h==="novi"&&!formOpen){history.replaceState(null,"","#nalozi");route();newNalog();return}
   let v=h.startsWith("n-")?"detalj":({novi:"novi",klijenti:"klijenti",podesavanja:"podesavanja",uloge:"uloge"}[h]||"arhiva");
   if(h==="moji"&&!prost()&&roleKnown)history.replaceState(null,"","#nalozi");
   if(((v==="podesavanja"||v==="uloge")&&!isAdmin())||(v==="klijenti"&&!can("klijentiVidi"))){if(roleKnown){history.replaceState(null,"","#nalozi")}v="arhiva"}
@@ -771,18 +796,76 @@ function closeChooser(){$("#chooser").hidden=true}
 /* ---------- nalozi u toku: pokrenut tajmer, još nesačuvan – vide ih administrator i serviser na drugim uređajima ---------- */
 let utRows=[],utT=null,utLast="";
 function utOn(){return !!(window.RN&&RN.sb)}
+// sažetak nacrta za listu „u toku"
+function utSum(d){const t=d.timer||{},f=d.f||{};return{tip:d.tip,klijent:f.k_naziv||"",reg:(f.v_reg||"").toUpperCase(),serviser:[f.r_serviser,...(d.os||[]).map(o=>o.name)].filter(Boolean).join(", "),
+  start:t.start,stop:t.stop||null,pausedAt:t.pausedAt||null,pauzeMs:(t.pauze||[]).reduce((a,p)=>a+(p.do-p.od),0)}}
 function utSync(){if(!utOn()||editId||!formOpen||!timer.start)return;if(!timer.nid)timer.nid="rn"+timer.start.toString(36);
-  const d={tip,klijent:val("k_naziv"),reg:val("v_reg").toUpperCase(),serviser:val("r_serviser"),start:timer.start,stop:timer.stop||null,pausedAt:timer.pausedAt||null,pauzeMs:(timer.pauze||[]).reduce((a,p)=>a+(p.do-p.od),0)};
+  const d=utSum({tip,f:{k_naziv:val("k_naziv"),v_reg:val("v_reg"),r_serviser:val("r_serviser")},os:ostali,timer});
   const k=JSON.stringify(d);if(k===utLast)return;const id=timer.nid;
   clearTimeout(utT);utT=setTimeout(async()=>{try{const r=await RN.sb.from("u_toku").upsert({id,data:d});if(!r.error)utLast=k}catch(e){}},1200)}
+async function utPush(id,d){if(!utOn()||!d||!d.timer||!d.timer.start)return;try{await RN.sb.from("u_toku").upsert({id,data:utSum(d)})}catch(e){}}
 async function utDel(id){clearTimeout(utT);utLast="";utRows=utRows.filter(r=>r.id!==id);if(!utOn()||!id)return;try{await RN.sb.from("u_toku").delete().eq("id",id)}catch(e){}}
 async function utLoad(){if(!utOn())return;try{const r=await RN.sb.from("u_toku").select("id,user_id,data,updated_at").order("updated_at",{ascending:false});if(!r.error){utRows=r.data||[];if(!$("#v-arhiva").hidden)renderDraftNote()}}catch(e){}}
-setInterval(()=>{if(!document.hidden&&!$("#v-arhiva").hidden)utLoad()},60000);
+setInterval(()=>{if(document.hidden||$("#v-arhiva").hidden)return;utLoad();renderDraftNote()},60000);
 document.addEventListener("visibilitychange",()=>{if(!document.hidden&&!$("#v-arhiva").hidden)utLoad()});
-$("#draftNote").addEventListener("click",async e=>{const b=e.target.closest("[data-utdel]");if(!b)return;
+
+/* ---------- otvoreni nalozi: serviser sačuva nalog sa pokrenutim tajmerom i vrati se kasnije ---------- */
+// čuvaju se na uređaju (fotografije u IndexedDB), a sažetak ide u listu „u toku"
+const OKEY="rn_otvoreni";
+function otv(){try{return JSON.parse(ls.get(OKEY)||"{}")||{}}catch(e){return{}}}
+function otvSet(o){ls.set(OKEY,JSON.stringify(o))}
+const idb=(()=>{let p=null;const open=()=>p||(p=new Promise((res,rej)=>{const r=indexedDB.open("rn-otvoreni",1);r.onupgradeneeded=()=>r.result.createObjectStore("f");r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}));
+  const tx=async(mode,fn)=>{const db=await open();return new Promise((res,rej)=>{const t=db.transaction("f",mode),q=fn(t.objectStore("f"));t.oncomplete=()=>res(q&&q.result);t.onerror=()=>rej(t.error)})};
+  return{put:(k,v)=>tx("readwrite",x=>x.put(v,k)),get:k=>tx("readonly",x=>x.get(k)),del:k=>tx("readwrite",x=>x.delete(k))}})();
+const tRun=t=>!!(t&&t.start&&!t.stop&&!t.pausedAt);
+const tMin=(t,now)=>{if(!t||!t.start)return 0;const end=t.stop||now||Date.now();return Math.max(0,Math.round((end-t.start-(t.pauze||[]).reduce((a,p)=>a+(p.do-p.od),0)-(t.pausedAt&&!t.stop?end-t.pausedAt:0))/60000))};
+const tSt=t=>!t||!t.start?"nije pokrenut":t.stop?"zatvoren, čeka čuvanje":t.pausedAt?"pauza od "+fmtT(t.pausedAt):"radi";
+const tCls=t=>!t||!t.start||t.stop?"":t.pausedAt?" pz":" run";
+let parking=false;
+async function parkCurrent(){if(!formOpen||editId||!timer.start)return false;
+  if(!timer.nid)timer.nid="rn"+timer.start.toString(36);const id=timer.nid;
+  saveDraft();let d=null;try{d=JSON.parse(ls.get(DKEY)||"null")}catch(e){}if(!d)return false;
+  const o=otv();o[id]=d;otvSet(o);
+  try{if(photos.length)await idb.put(id,photos.map(p=>({id:p.id||null,blob:p.blob||null})))}catch(e){}
+  utPush(id,d);clearDraft();parking=true;try{resetForm()}finally{parking=false}formOpen=false;return true}
+async function openOtv(id){if(!otv()[id])return;
+  if(formOpen&&!editId&&timer.start&&timer.nid!==id)await parkCurrent();
+  else if(formOpen&&!editId&&dirty()&&!timer.start&&!confirm("Započeti nalog na kome vreme nije pokrenuto biće odbačen. Nastaviti?"))return;
+  const o=otv(),d=o[id];if(!d)return;delete o[id];otvSet(o);
+  ls.set(DKEY,JSON.stringify(d));restoreDraft();
+  try{const ph=await idb.get(id);if(ph&&ph.length){photos=ph.map(p=>({...p,url:p.blob?URL.createObjectURL(p.blob):BLOB+p.id}));renderPhotos()}await idb.del(id)}catch(e){}
+  if(location.hash==="#novi")route();else location.hash="#novi"}
+function pauseOtv(id){const o=otv(),d=o[id];if(!d||!tRun(d.timer))return;d.timer.pausedAt=Date.now();otvSet(o);utPush(id,d)}
+// samo jedan nalog sme da radi: pokretanje/nastavak jednog pauzira ostale
+function pauseOthers(keep){const o=otv();let n=0;Object.keys(o).forEach(id=>{if(id!==keep&&tRun(o[id].timer)){pauseOtv(id);n++}});if(n)toast(n===1?"Drugi otvoren nalog je pauziran.":n+" otvorena naloga su pauzirana.")}
+// novi nalog: ako već postoji otvoren nalog sa vremenom – pitaj da li da se pauzira ili zatvori
+function newNalog(){
+  if(formOpen&&!editId&&timer.start){busyDlg(null);return}
+  const o=otv(),run=Object.keys(o).find(id=>tRun(o[id].timer));
+  if(run){busyDlg(run);return}
+  openChooser("new")}
+function busyDlg(id){
+  const cur=id===null,d=cur?{tip,f:{k_naziv:val("k_naziv"),v_reg:val("v_reg")},timer}:otv()[id];if(!d)return openChooser("new");
+  const t=d.timer||{},T=TIP[d.tip]||TIP.ostalo,run=tRun(t),closed=!!t.stop;
+  const box=document.createElement("div");box.className="overlay";
+  box.innerHTML=`<div class="sheet-panel" role="dialog" aria-label="Već imate otvoren nalog"><div class="sec-h"><h2>Već imate otvoren nalog</h2></div>
+   <div class="ut-row" style="--c:var(${T.c});border:1px solid var(--line);border-left:5px solid var(${T.c});border-radius:6px;margin-bottom:12px"><div class="mid"><b>${esc(T.n)}${d.f.k_naziv?" · "+esc(d.f.k_naziv):""}${d.f.v_reg?" · "+esc(String(d.f.v_reg).toUpperCase()):""}</b><span>od ${fmtT(t.start)} · rad ${fmtDur(tMin(t))}</span></div><span class="ut-st${tCls(t)}">${tSt(t)}</span></div>
+   <p class="stat" style="margin:0 0 12px">${closed?"Ovaj nalog je zatvoren, ali još nije sačuvan. Sačuvajte ga pre novog naloga.":run?"Vreme na ovom nalogu teče. Pre novog naloga pauzirajte ga (vratićete mu se kasnije) ili ga zatvorite.":"Ovaj nalog je na pauzi. Ostaje sačuvan među otvorenim nalozima i možete mu se vratiti kasnije."}</p>
+   <div class="busy-act">${closed?`<button type="button" class="btn pri" data-b="open">Otvori i sačuvaj</button>`:`${run?`<button type="button" class="btn pri" data-b="pause">Pauziraj i otvori novi</button>`:`<button type="button" class="btn pri" data-b="pause">Otvori novi nalog</button>`}<button type="button" class="btn" data-b="close">Zatvori taj nalog</button><button type="button" class="btn" data-b="open">Nastavi taj nalog</button>`}<button type="button" class="btn" data-b="x">Otkaži</button></div></div>`;
+  document.body.appendChild(box);
+  const done=()=>box.remove();box.addEventListener("click",e=>{if(e.target===box)done()});
+  box.querySelectorAll("[data-b]").forEach(b=>b.onclick=async()=>{const a=b.dataset.b;done();if(a==="x")return;
+    if(a==="pause"){if(cur){if(tRun(timer)){timer.pausedAt=Date.now();renderTimer();saveDraft()}await parkCurrent()}else pauseOtv(id);
+      toast("Prethodni nalog je sačuvan među otvorenim nalozima"+(run?" i pauziran.":"."));openChooser("new");return}
+    if(cur){if(location.hash==="#novi")route();else location.hash="#novi"}else await openOtv(id);
+    if(a==="close")setTimeout(()=>{if(timer.start&&!timer.stop)$("#tmStop").click()},150)})}
+$("#draftNote").addEventListener("click",async e=>{
+  const o=e.target.closest("[data-otv]");if(o){e.preventDefault();openOtv(o.dataset.otv);return}
+  const pz=e.target.closest("[data-otvpz]");if(pz){pauseOtv(pz.dataset.otvpz);renderDraftNote();toast("Nalog je pauziran.");return}
+  const b=e.target.closest("[data-utdel]");if(!b)return;
   if(!confirm("Ukloniti ovaj nalog iz liste „u toku”? Serviseru se nalog ne briše sa telefona – samo prestaje da se prikazuje ovde."))return;
   await utDel(b.dataset.utdel);renderDraftNote()});
-$("#fab").onclick=()=>openChooser("new");
+$("#fab").onclick=newNalog;
 $("#chClose").onclick=closeChooser;
 $("#chooser").addEventListener("click",e=>{if(e.target.id==="chooser")closeChooser()});
 addEventListener("keydown",e=>{if(e.key!=="Escape")return;if(!$("#chooser").hidden)closeChooser();if(!$("#closeDlg").hidden)$("#closeDlg").hidden=true});
@@ -790,15 +873,18 @@ function renderBanner(){const t=TIP[tip];const b=$("#tipBanner");b.style.setProp
   b.innerHTML=`<div><div class="tb-l">${editId?`Izmena naloga ${esc(editOrig.broj)} · vrsta posla`:"Vrsta posla"}</div><div class="tb-n">${t.n}</div></div><button type="button" class="btn sm" id="tbChg">Promeni vrstu</button>`;
   $("#tbChg").onclick=()=>openChooser("change")}
 function renderDraftNote(){
-  const mine=formOpen&&dirty(),now=Date.now();
-  const rows=utRows.filter(r=>!(mine&&r.id===timer.nid)&&r.data&&r.data.start);
-  const dur=d=>{const end=d.stop||now;return Math.max(0,Math.round((end-d.start-(d.pauzeMs||0)-(d.pausedAt&&!d.stop?end-d.pausedAt:0))/60000))};
-  const st=d=>d.stop?"zatvoren, čeka čuvanje":d.pausedAt?"pauza od "+fmtT(d.pausedAt):"radi";
-  const myRun=mine&&timer.start?` <span class="ut-st${timer.pausedAt?" pz":timer.stop?"":" run"}">${timer.stop?"zatvoren":timer.pausedAt?"pauza":"u toku"} · ${fmtDur(Math.round(radMs()/60000))}</span>`:"";
-  $("#draftNote").innerHTML=(mine?`<div class="draft"><span style="flex:1 1 200px">Započet nalog: <b>${TIP[tip].n}</b>${val("k_naziv")?" · "+esc(val("k_naziv")):""}${myRun}</span><a class="btn sm pri" href="#novi">Nastavi</a></div>`:"")+
-   (rows.length?`<div class="utoku"><div class="ut-h"><span class="ut-dot"></span>Nalozi u toku · ${rows.length}</div>${rows.map(r=>{const d=r.data,t=TIP[d.tip]||TIP.ostalo,ja=r.user_id===myId;
-     return `<div class="ut-row" style="--c:var(${t.c})"><div class="mid"><b>${esc(t.n)}${d.klijent?" · "+esc(d.klijent):""}${d.reg?" · "+esc(d.reg):""}</b><span>${esc(ja?"Vi":d.serviser||"—")} · od ${fmtT(d.start)}${ymd(new Date(d.start))!==ymd(new Date())?" ("+fmtD(ymd(new Date(d.start)))+")":""} · rad ${fmtDur(dur(d))}${ja?" · započet na drugom uređaju":""}</span></div>`+
-       `<span class="ut-st${d.stop?"":d.pausedAt?" pz":" run"}">${st(d)}</span>${isAdmin()?`<button type="button" class="xbtn" data-utdel="${esc(r.id)}" title="Ukloni iz liste (npr. zaboravljen nalog)" aria-label="Ukloni">×</button>`:""}</div>`}).join("")}</div>`:"");
+  const now=Date.now(),o=otv(),cur=formOpen&&!editId&&dirty();
+  const mine=[...(cur?[{id:timer.nid||"",cur:1,tip,k:val("k_naziv"),r:val("v_reg"),t:timer}]:[]),
+    ...Object.entries(o).map(([id,d])=>({id,tip:d.tip,k:(d.f||{}).k_naziv,r:(d.f||{}).v_reg,t:d.timer})).sort((x,y)=>(y.t?.start||0)-(x.t?.start||0))];
+  const skip=new Set(mine.map(m=>m.id).filter(Boolean));
+  const rows=utRows.filter(r=>!skip.has(r.id)&&r.data&&r.data.start);
+  const mRow=m=>{const T=TIP[m.tip]||TIP.ostalo;return `<div class="ut-row" style="--c:var(${T.c})"><div class="mid"><b>${esc(T.n)}${m.k?" · "+esc(m.k):""}${m.r?" · "+esc(String(m.r).toUpperCase()):""}</b><span>${m.t&&m.t.start?`od ${fmtT(m.t.start)} · rad ${fmtDur(tMin(m.t,now))}`:"vreme nije pokrenuto"}${m.cur?" · otvoren u formi":""}</span></div>`+
+    `<span class="ut-st${tCls(m.t)}">${tSt(m.t)}</span>${!m.cur&&tRun(m.t)?`<button type="button" class="btn sm" data-otvpz="${esc(m.id)}">Pauziraj</button>`:""}`+
+    (m.cur?`<a class="btn sm pri" href="#novi">Nastavi</a>`:`<button type="button" class="btn sm pri" data-otv="${esc(m.id)}">Nastavi</button>`)+`</div>`};
+  $("#draftNote").innerHTML=(mine.length?`<div class="utoku mine"><div class="ut-h">Vaši otvoreni nalozi · ${mine.length}</div>${mine.map(mRow).join("")}</div>`:"")+
+   (rows.length?`<div class="utoku"><div class="ut-h"><span class="ut-dot"></span>Nalozi u toku · ${rows.length}</div>${rows.map(r=>{const d=r.data,T=TIP[d.tip]||TIP.ostalo,ja=r.user_id===myId;
+     return `<div class="ut-row" style="--c:var(${T.c})"><div class="mid"><b>${esc(T.n)}${d.klijent?" · "+esc(d.klijent):""}${d.reg?" · "+esc(d.reg):""}</b><span>${esc(ja?"Vi":d.serviser||"—")} · od ${fmtT(d.start)}${ymd(new Date(d.start))!==ymd(new Date())?" ("+fmtD(ymd(new Date(d.start)))+")":""} · rad ${fmtDur(tMin({start:d.start,stop:d.stop,pausedAt:d.pausedAt,pauze:[{od:0,do:d.pauzeMs||0}]},now))}${ja?" · na drugom uređaju":""}</span></div>`+
+       `<span class="ut-st${tCls(d)}">${tSt(d)}</span>${isAdmin()?`<button type="button" class="xbtn" data-utdel="${esc(r.id)}" title="Ukloni iz liste (npr. zaboravljen nalog)" aria-label="Ukloni">×</button>`:""}</div>`}).join("")}</div>`:"");
 }
 
 /* ---------- header ---------- */
@@ -879,7 +965,7 @@ function applySecs(){const S=secOf(tip),t=TIP[tip];
   const s2=S.has("sig2");$("#sigT").textContent=s2?"Potpis servisera koji preuzima":"Potpis klijenta";
   $("#potpisnikL").textContent=s2?"Serviser koji preuzima":"Odgovorno lice – ime i prezime";$("#k_emailW").hidden=s2;
   if(!$("#secSig").hidden)setTimeout(sigSize,30);
-  renderKlSelect();if(S.has("kal"))kalRender();if(S.has("kol")){servLoad();kolOpts();if(!$("#kolRows").children.length)kolAdd()}if(S.has("rez")&&!$("#rezList").children.length)rezAdd()}
+  renderKlSelect();if(S.has("kal"))kalRender();servLoad();if(S.has("kol")){kolOpts();if(!$("#kolRows").children.length)kolAdd()}if(S.has("rez")&&!$("#rezList").children.length)rezAdd()}
 
 /* ---------- kalibracija ---------- */
 const KALC={Sonda:["Očitavanje (N)","Litara"],RPM:["Vrednost na uređaju (mV)","Broj obrtaja"]};
@@ -903,13 +989,25 @@ function kalSet(k){k=k||{};$("#kal_op").value=k.oprema||"";$("#kal_model").value
 
 /* ---------- prenos / popis opreme (količine) ---------- */
 let servNames=[];
-async function servLoad(){if(!servNames.length){try{const L=await RN.users.list();servNames=L.filter(u=>u.active!==false).map(u=>u.name||u.username).filter(Boolean).sort((a,b)=>a.localeCompare(b,"sr"))}catch(e){servNames=[]}}
+let servUsers=[],servP=null;
+async function servLoad(){if(!servNames.length){try{servP=servP||RN.users.list();const L=await servP;servUsers=L.filter(u=>u.active!==false).map(u=>({id:u.id,name:u.name||u.username})).filter(u=>u.name).sort((a,b)=>a.name.localeCompare(b.name,"sr"));servNames=servUsers.map(u=>u.name)}catch(e){servNames=[];servP=null}}
+  srvRender();
   $("#servList").innerHTML=optHtml(servNames);primOpts()}
 // padajući meni „Opremu preuzeo": svi serviseri firme osim onoga ko predaje
 function primOpts(keep){const sel=$("#kol_prim"),cur=keep??sel.value,pred=val("kol_pred").toLowerCase();
   const L=servNames.filter(n=>n.toLowerCase()!==pred);if(cur&&!L.includes(cur))L.push(cur);
   sel.innerHTML=`<option value="">${servNames.length?"— izaberite servisera —":"— spisak servisera nije dostupan —"}</option>`+L.map(n=>`<option${n===cur?" selected":""}>${esc(n)}</option>`).join("")}
 $("#kol_pred").addEventListener("change",()=>primOpts());
+// ostali serviseri na nalogu (glavni je „Serviser"); čuvaju se imena i oznake naloga, da i oni vide nalog
+let ostali=[];
+const srvTxt=r=>[r&&r.serviser,...((r&&r.serviseri)||[])].filter(Boolean).join(", ");
+function srvRender(){const main=val("r_serviser").trim().toLowerCase();
+  $("#srvChips").innerHTML=ostali.map((o,i)=>`<span class="chip-x">${esc(o.name)}<button type="button" data-srvx="${i}" aria-label="Ukloni: ${esc(o.name)}">×</button></span>`).join("");
+  const L=servUsers.filter(u=>u.name.toLowerCase()!==main&&!ostali.some(o=>o.name===u.name));
+  $("#srvAdd").innerHTML=`<option value="">${servUsers.length?(L.length?"+ Dodaj servisera…":"— nema više servisera —"):"— spisak servisera nije dostupan —"}</option>`+L.map(u=>`<option value="${esc(u.id)}">${esc(u.name)}</option>`).join("")}
+$("#srvAdd").addEventListener("change",e=>{const u=servUsers.find(x=>x.id===e.target.value);if(u&&!ostali.some(o=>o.name===u.name))ostali.push({id:u.id,name:u.name});srvRender();dSave()});
+$("#srvChips").addEventListener("click",e=>{const b=e.target.closest("[data-srvx]");if(!b)return;ostali.splice(+b.dataset.srvx,1);srvRender();dSave()});
+$("#r_serviser").addEventListener("input",()=>{if(servUsers.length)srvRender()});
 const kolLabel=o=>[o.sifra,o.model].filter(Boolean).join(" – ");
 function kolOpts(){const L=[];katalog().forEach(o=>{if(!o.model)return;if(o.sifra)L.push(o.sifra+" – "+o.model);if(o.sifraP)L.push(o.sifraP+" – "+o.model);if(!o.sifra&&!o.sifraP)L.push(o.model)});$("#kolOpList").innerHTML=optHtml(uniq(L))}
 function kolNum(){const n=[...$("#kolRows").children].reduce((a,r)=>a+(+r.querySelector(".kol-n").value||0),0);$("#kolCount").textContent=n?`ukupno ${n} kom`:""}
@@ -1153,10 +1251,12 @@ function renderTimer(){
   const pzTxt=pm?` · pauze ${fmtDur(pm)}`:"";
   $("#tmInfo").textContent=!start?"Pritisnite Start kada počnete posao.":pz?`Pauza od ${fmtT(pausedAt)}. Pritisnite Nastavi kada se vratite na posao.`:run?`Posao traje od ${fmtT(start)}${pzTxt}.`:`Početak ${fmtT(start)} · Kraj ${fmtT(stop)} · Rad ${fmtDur(Math.round(radMs()/60000))}${pzTxt} · Nalog je zatvoren.`;
   clearInterval(tmInt);if(run||pz)tmInt=setInterval(renderTimer,1000);
+  const fp=$("#fPark");if(fp)fp.hidden=!!(editId||!start||stop);
 }
-$("#tmStart").onclick=()=>{timer={start:Date.now(),stop:null,pauze:[],pausedAt:null,nid:"rn"+Date.now().toString(36)};$("#r_datum").value=new Date().toLocaleDateString("sv-SE");renderTimer();saveDraft();toast("Radno vreme je pokrenuto.")};
+$("#tmStart").onclick=()=>{timer={start:Date.now(),stop:null,pauze:[],pausedAt:null,nid:"rn"+Date.now().toString(36)};pauseOthers(timer.nid);$("#r_datum").value=new Date().toLocaleDateString("sv-SE");renderTimer();saveDraft();toast("Radno vreme je pokrenuto.")};
 $("#tmPause").onclick=()=>{timer.pausedAt=Date.now();renderTimer();saveDraft();toast("Pauza. Vreme rada je zaustavljeno.")};
-$("#tmResume").onclick=()=>{timer.pauze=[...(timer.pauze||[]),{od:timer.pausedAt,do:Date.now()}];timer.pausedAt=null;renderTimer();saveDraft();toast("Rad je nastavljen.")};
+$("#tmResume").onclick=()=>{timer.pauze=[...(timer.pauze||[]),{od:timer.pausedAt,do:Date.now()}];timer.pausedAt=null;renderTimer();saveDraft();toast("Rad je nastavljen.");pauseOthers(timer.nid)};
+$("#fPark").onclick=async()=>{const run=tRun(timer);if(await parkCurrent()){toast(run?"Nalog je sačuvan kao otvoren – vreme i dalje teče.":"Nalog je sačuvan kao otvoren.");location.hash="#nalozi"}};
 $("#tmStop").onclick=()=>$("#nf").requestSubmit?$("#nf").requestSubmit():$("#fSave").click();
 function lockForm(on){$("#nf").classList.toggle("locked",on);
   document.querySelectorAll("#nf input,#nf select,#nf textarea,#nf button").forEach(el=>{if(el.closest("#timerSec")||el.id==="fSave"||el.id==="fReset")return;el.disabled=on});
@@ -1245,7 +1345,7 @@ $("#geoBtn").onclick=async()=>{const b=$("#geoBtn");b.disabled=true;b.textConten
 const DKEY="rn_draft";let pendingK=null,dT=null;
 function saveDraft(){if(!formOpen||editId)return;const f={};
   document.querySelectorAll("#nf input[id],#nf select[id],#nf textarea[id]").forEach(el=>{if(el.type==="file"||el.id==="k_find"||/^dx_|^iv_/.test(el.id)||el.closest("#ivList,#kalRows,#kolRows,#rezList,#dxList"))return;f[el.id]=(el.type==="checkbox"||el.type==="radio")?el.checked:el.value});
-  ls.set(DKEY,JSON.stringify({tip,f,dx:dxData(),iv:ivData(),kal:kalData(),kol:kolData(),rez:rezData(),timer,geo,t:Date.now()}));utSync()}
+  ls.set(DKEY,JSON.stringify({tip,f,dx:dxData(),iv:ivData(),kal:kalData(),kol:kolData(),rez:rezData(),timer,geo,os:ostali,t:Date.now()}));utSync()}
 const dSave=()=>{clearTimeout(dT);dT=setTimeout(saveDraft,400)};
 $("#nf").addEventListener("change",e=>{if(e.target.type==="radio"){const g=e.target.closest(".seg");if(g)g.classList.remove("invalid-g")}});
 $("#nf").addEventListener("input",dSave);$("#nf").addEventListener("change",dSave);$("#nf").addEventListener("click",e=>{if(e.target.closest(".xbtn"))dSave()});
@@ -1256,7 +1356,7 @@ function restoreDraft(){let d=null;try{d=JSON.parse(ls.get(DKEY)||"null")}catch(
   $("#ivList").innerHTML="";(d.iv||[]).forEach(v=>addIv(v));ivNum();
   if(d.kal)kalSet(d.kal);if(d.kol){kolSet(d.kol);if(!$("#kolRows").children.length&&secOf(tip).has("kol"))kolAdd()}$("#rezList").innerHTML="";(d.rez||[]).forEach(v=>rezAdd(v));
   Object.entries(d.f).forEach(([id,v])=>{const el=document.getElementById(id);if(!el||id==="k_sel"||id==="v_sel")return;if(el.type==="checkbox"||el.type==="radio")el.checked=!!v;else el.value=v});
-  pendingK=d.f.k_sel?{k:d.f.k_sel,v:d.f.v_sel}:null;geo=d.geo||null;renderGeo();
+  pendingK=d.f.k_sel?{k:d.f.k_sel,v:d.f.v_sel}:null;geo=d.geo||null;renderGeo();ostali=d.os||[];srvRender();
   timer=Object.assign({start:null,stop:null,pauze:[],pausedAt:null},d.timer||{});renderTimer();if(timer.stop){lockForm(true);$("#fSave").textContent="Sačuvaj zatvoren nalog";$("#fMsg").textContent="Ovaj nalog je zatvoren, ali još nije sačuvan. Pritisnite „Sačuvaj zatvoren nalog”."}["imei","iccid","iccid2"].forEach(hintCode);formOpen=true}
 
 /* ---------- form reset ---------- */
@@ -1266,7 +1366,7 @@ function fillServiser(){const m=window.RN&&RN.me&&RN.me();if(!m||!m.name)return;
   if(!editId&&(!isAdmin()||!val("r_serviser")))$("#r_serviser").value=m.name;$("#r_serviser").readOnly=!isAdmin();
   if(!editId&&!val("kol_pred"))$("#kol_pred").value=m.name;$("#kol_pred").readOnly=!isAdmin();if(typeof primOpts==="function")primOpts()}
 function resetForm(t){
-  if(timer&&timer.start&&timer.nid&&!editId)utDel(timer.nid);
+  if(!parking&&timer&&timer.start&&timer.nid&&!editId)utDel(timer.nid);
   geo=null;if(typeof renderGeo==="function")renderGeo();
   editId=null;editOrig=null;editSig=null;$("#sigOld").hidden=true;$("#timerSec").hidden=false;$("#editTimes").hidden=true;$("#fReset").textContent="Odbaci nalog";
   $("#nf").reset();tip=t||"ugradnja";$("#k_find").value="";renderKlSelect();renderTipFields();renderBanner();
@@ -1274,7 +1374,7 @@ function resetForm(t){
   $("#dxList").innerHTML="";dxNum();$("#ivList").innerHTML="";ivNum();$("#kolRows").innerHTML="";$("#rezList").innerHTML="";kalSet(null);if(secOf(tip).has("kol"))kolAdd();if(secOf(tip).has("rez"))rezAdd();$("#u_stanje").classList.remove("invalid-g");$("#u_vl").classList.remove("invalid-g");
   photos.forEach(p=>URL.revokeObjectURL(p.url));photos=[];renderPhotos();
   $("#r_datum").value=new Date().toLocaleDateString("sv-SE");
-  $("#r_serviser").value=ls.get("rn_serviser")||"";fillServiser();
+  $("#r_serviser").value=ls.get("rn_serviser")||"";fillServiser();ostali=[];srvRender();
   timer={start:null,stop:null,pauze:[],pausedAt:null};renderTimer();lockForm(false);$("#fSave").textContent="Stop i zatvori nalog";["imei","iccid","iccid2"].forEach(k=>{$("#h_"+k).textContent="";$("#h_"+k).className="hint"});
   sigSize();$("#fMsg").textContent="";
   document.querySelectorAll(".invalid").forEach(x=>x.classList.remove("invalid"));
@@ -1420,7 +1520,7 @@ async function doSave(){const msg=$("#fMsg");msg.textContent="";
       kalibracija:S.has("kal")?kalData():undefined,kolicine:S.has("kol")?kolData():undefined,rezervoari:S.has("rez")?rezData():undefined,
       uredjaj:(S.has("iv")&&!gpsOn)?(sv?ivUredjaj(intervencije):{}):!gpsOn?{}:{vl:($("#u_vl input:checked")||{}).value||"",model:val("u_model"),sifra:sifraZa("GPS uređaj",val("u_model"),($("#u_stanje input:checked")||{}).value),stanje:($("#u_stanje input:checked")||{}).value||"",imei:val("u_imei"),iccid:val("u_iccid").toUpperCase(),op1:val("u_op1"),iccid2:val("u_iccid2").toUpperCase(),op2:val("u_iccid2")?val("u_op2"):""},
       detalji:det,dodatna,
-      rad:{datum:val("r_datum"),od:fmtT(timer.start),do:fmtT(timer.stop),start:timer.start,stop:timer.stop,trajanjeMin:Math.round(radMs()/60000),pauzeMin:Math.round(pauzeMs(timer.stop)/60000),pauze:(timer.pauze||[]).map(p=>({od:p.od,do:p.do})),serviser:val("r_serviser")},
+      rad:{datum:val("r_datum"),od:fmtT(timer.start),do:fmtT(timer.stop),start:timer.start,stop:timer.stop,trajanjeMin:Math.round(radMs()/60000),pauzeMin:Math.round(pauzeMs(timer.stop)/60000),pauze:(timer.pauze||[]).map(p=>({od:p.od,do:p.do})),serviser:val("r_serviser"),serviseri:ostali.map(o=>o.name),serviseriId:ostali.map(o=>o.id).filter(Boolean)},
       napomena:val("napomena"),fotoIds,potpisId:(S.has("sig")||S.has("sig2"))?potpisId:"",potpisnik:(S.has("sig")||S.has("sig2"))?val("potpisnik"):"",lokacija:!S.has("geo")?null:geo?{...geo,adresa:val("geo_adr")}:(val("geo_adr")?{adresa:val("geo_adr")}:null),emailKopija:S.has("sig")?val("k_email"):""};
     Object.keys(doc).forEach(k=>doc[k]===undefined&&delete doc[k]);
     if(editId){
@@ -1466,7 +1566,7 @@ function editNalog(n){
   TIP[tip].p.forEach(p=>{let v=n.detalji?.[p.k];if(p.t==="sel"&&String(v||"").startsWith(DR)){set("d_"+p.k+"_dr",String(v).slice(DR.length));v="Drugo";const w=$("#d_"+p.k+"_drW");if(w)w.hidden=false}if(p.t==="chk")(v||[]).forEach(x=>{const i=[...document.querySelectorAll(`#d_${p.k} input`)].find(i=>i.value===x);if(i)i.checked=true});else set("d_"+p.k,v)});
   (n.dodatna||[]).forEach(o=>addDx(o));(n.intervencije||[]).forEach(o=>addIv(o));
   if(n.kalibracija)kalSet(n.kalibracija);if(n.kolicine)kolSet(n.kolicine);$("#rezList").innerHTML="";(n.rezervoari||[]).forEach(v=>rezAdd(v));
-  set("r_datum",n.rad?.datum);set("r_serviser",n.rad?.serviser);set("napomena",n.napomena);set("potpisnik",n.potpisnik);set("k_email",n.emailKopija);geo=(n.lokacija&&n.lokacija.lat!=null)?n.lokacija:null;renderGeo();set("geo_adr",n.lokacija?.adresa||"");
+  set("r_datum",n.rad?.datum);set("r_serviser",n.rad?.serviser);ostali=(n.rad?.serviseri||[]).map((name,i)=>({name,id:(n.rad?.serviseriId||[])[i]||""}));srvRender();set("napomena",n.napomena);set("potpisnik",n.potpisnik);set("k_email",n.emailKopija);geo=(n.lokacija&&n.lokacija.lat!=null)?n.lokacija:null;renderGeo();set("geo_adr",n.lokacija?.adresa||"");
   photos=(n.fotoIds||[]).map(id=>({id,url:BLOB+id}));renderPhotos();
   editSig=n.potpisId||null;if(editSig){$("#sigOld").src=BLOB+editSig;$("#sigOld").hidden=false;$("#sigHint").hidden=true}
   $("#timerSec").hidden=true;$("#editTimes").hidden=false;
@@ -1490,9 +1590,9 @@ function perRange(){const p=$("#perSel").value,t=new Date();t.setHours(0,0,0,0);
 function visF(){let[a,b]=perRange();a=a&&(typeof a==="string"?a:ymd(a));b=b&&(typeof b==="string"?b:ymd(b));
   const sv=$("#srvSel").value,kl=$("#klfSel").value,pv=$("#provSel").value;
   return vis().filter(n=>{const dt=nDatum(n);if(a&&(!dt||dt<a))return false;if(b&&(!dt||dt>b))return false;
-    if(sv&&(n.rad?.serviser||"")!==sv)return false;if(kl&&(n.klijent?.naziv||"")!==kl)return false;if(pv&&(pv==="none"?provS(n)!=="":provS(n)!==pv))return false;return true})}
+    if(sv&&(n.rad?.serviser||"")!==sv&&!(n.rad?.serviseri||[]).includes(sv))return false;if(kl&&(n.klijent?.naziv||"")!==kl)return false;if(pv&&(pv==="none"?provS(n)!=="":provS(n)!==pv))return false;return true})}
 function fillPerSel(){const V=vis();const sel=(id,vals,first)=>{const el=$(id),cur=el.value;el.innerHTML=`<option value="">${first}</option>`+vals.map(v=>`<option${v===cur?" selected":""}>${esc(v)}</option>`).join("");if(cur&&!vals.includes(cur)){el.insertAdjacentHTML("beforeend",`<option selected>${esc(cur)}</option>`)}};
-  sel("#srvSel",uniq(V.map(n=>n.rad?.serviser)).sort((x,y)=>x.localeCompare(y,"sr")),"Svi serviseri");
+  sel("#srvSel",uniq(V.flatMap(n=>[n.rad?.serviser,...(n.rad?.serviseri||[])])).sort((x,y)=>x.localeCompare(y,"sr")),"Svi serviseri");
   sel("#klfSel",uniq(V.map(n=>n.klijent?.naziv)).sort((x,y)=>x.localeCompare(y,"sr")),"Svi klijenti");
   $("#perC").hidden=$("#perSel").value!=="custom";
   $("#perClr").hidden=$("#perSel").value==="sve"&&!$("#srvSel").value&&!$("#klfSel").value&&!$("#provSel").value}
@@ -1524,7 +1624,7 @@ $("#list").addEventListener("click",e=>{const b=e.target.closest(".pvb");if(!b)r
   if(st==="dopuna"){pvFocus=true;location.hash="#n-"+n.id;return}   // za dopunu treba napomena: otvara se nalog
   setProv(n.id,st)});
 let pvFocus=false;
-function rowHtml(n){const t=TIP[n.tip]||TIP.ostalo;return `<a class="row" href="#n-${esc(n.id)}" style="--c:var(${t.c})"><span class="no">${esc(n.broj)}</span><span class="mid"><b>${esc(nTitle(n))} ${modTag(klMod(n))}${n.tip==="test"?` <span class="tag" style="--c:var(--t-test);vertical-align:2px">${n.testIshod?"Test · "+esc(n.testIshod):"Test u toku"}</span>`:""}${(n.intervencije||[]).some(o=>o.manip)?' <span class="tag" style="--c:var(--danger);vertical-align:2px" title="Oštećenje usled manipulacije – naplatiti klijentu">Naplata</span>':""}</b><span>${n.vozilo?.reg?`<span class="mono">${esc(n.vozilo.reg)}</span> · `:""}${esc(n.rad?.serviser)}</span></span><span class="dt"><span class="tag">${t.n}${n.tip==="seoba"&&n.detalji?.smer?" · "+esc(n.detalji.smer):""}</span><br>${fmtD(n.rad?.datum)}</span>${pvRow(n)}</a>`}
+function rowHtml(n){const t=TIP[n.tip]||TIP.ostalo;return `<a class="row" href="#n-${esc(n.id)}" style="--c:var(${t.c})"><span class="no">${esc(n.broj)}</span><span class="mid"><b>${esc(nTitle(n))} ${modTag(klMod(n))}${n.tip==="test"?` <span class="tag" style="--c:var(--t-test);vertical-align:2px">${n.testIshod?"Test · "+esc(n.testIshod):"Test u toku"}</span>`:""}${(n.intervencije||[]).some(o=>o.manip)?' <span class="tag" style="--c:var(--danger);vertical-align:2px" title="Oštećenje usled manipulacije – naplatiti klijentu">Naplata</span>':""}</b><span>${n.vozilo?.reg?`<span class="mono">${esc(n.vozilo.reg)}</span> · `:""}${esc(srvTxt(n.rad))}</span></span><span class="dt"><span class="tag">${t.n}${n.tip==="seoba"&&n.detalji?.smer?" · "+esc(n.detalji.smer):""}</span><br>${fmtD(n.rad?.datum)}</span>${pvRow(n)}</a>`}
 function applyListMode(){const p=listMode!=="sve";
   document.querySelectorAll("#v-arhiva .adv").forEach(e=>e.hidden=p);
   $("#navMoji").hidden=!prost();$("#navNal").textContent=prost()?"Danas":"Nalozi";
@@ -1533,7 +1633,7 @@ function applyListMode(){const p=listMode!=="sve";
   $("#arhT").textContent=listMode==="danas"?"Današnji nalozi":listMode==="moji"?"Moji nalozi":"Radni nalozi";
   $("#arhLead").innerHTML=listMode==="danas"?"Nalozi od danas. Starije naloge vidite u kartici <b>Moji nalozi</b>.":listMode==="moji"?(d?`Vaši nalozi ${daniTxt(d)}.`:"Svi vaši nalozi."):"Novi nalog otvarate dugmetom <b>+</b> dole desno.";
   if(p)$("#limitNote").hidden=true}
-$("#bigNew").onclick=()=>openChooser("new");
+$("#bigNew").onclick=newNalog;
 function renderArchive(){
   renderFilters();
   if(!loaded&&!nalozi.length)return;
@@ -1544,7 +1644,7 @@ function renderArchive(){
     $("#count").textContent=rows.length?`${rows.length} ${rows.length===1?"nalog":"naloga"}`:"";
     $("#list").innerHTML=rows.length?rows.map(rowHtml).join(""):`<div class="empty">${listMode==="danas"?"Danas još nemate naloga.":"Nemate naloga u ovom periodu."}</div>`;return}
   const q=$("#q").value.trim().toLowerCase();
-  const rows=visF().filter(n=>(filt==="sve"||n.tip===filt)&&(!q||[n.broj,n.klijent?.naziv,nTitle(n),...((n.kolicine?.stavke)||[]).map(o=>o.oprema+" "+o.sn),n.kalibracija?.sn,n.vozilo?.reg,n.detalji?.imei,n.uredjaj?.imei,n.uredjaj?.iccid,n.uredjaj?.iccid2,n.detalji?.saVozila,n.detalji?.naVozilo,n.rad?.serviser,n.uredjaj?.model,...(n.dodatna||[]).map(o=>o.vrsta+" "+o.model+" "+o.sn),...(n.oprema||[]).map(o=>o.sn),...(n.intervencije||[]).map(o=>[o.oprema,o.sk?.id,o.sk?.iccid,o.nv?.id,o.nv?.iccid,o.nv?.iccid2,o.manip?"naplata manipulacija":""].join(" "))].join(" ").toLowerCase().includes(q)));
+  const rows=visF().filter(n=>(filt==="sve"||n.tip===filt)&&(!q||[n.broj,n.klijent?.naziv,nTitle(n),...((n.kolicine?.stavke)||[]).map(o=>o.oprema+" "+o.sn),n.kalibracija?.sn,n.vozilo?.reg,srvTxt(n.rad),n.detalji?.imei,n.uredjaj?.imei,n.uredjaj?.iccid,n.uredjaj?.iccid2,n.detalji?.saVozila,n.detalji?.naVozilo,n.rad?.serviser,n.uredjaj?.model,...(n.dodatna||[]).map(o=>o.vrsta+" "+o.model+" "+o.sn),...(n.oprema||[]).map(o=>o.sn),...(n.intervencije||[]).map(o=>[o.oprema,o.sk?.id,o.sk?.iccid,o.nv?.id,o.nv?.iccid,o.nv?.iccid2,o.manip?"naplata manipulacija":""].join(" "))].join(" ").toLowerCase().includes(q)));
   const moje=vis().filter(n=>provS(n)==="dopuna"&&n.createdBy===myId);
   $("#dopBan").innerHTML=moje.length&&!can("provera")?`<button type="button" class="dopuna-ban" id="dopBtn"><b>${moje.length===1?"1 vaš nalog traži":moje.length+" vaših naloga traže"} dopunu.</b> Prikaži ih.</button>`:"";
   if($("#dopBtn"))$("#dopBtn").onclick=()=>{$("#provSel").value="dopuna";renderArchive()};
@@ -1603,7 +1703,7 @@ function sheet(n,mode){
    kalibracija:kalSheet(n,mono),kolicine:kolSheet(n,mono,mode),rezervoari:rezSheet(n),
    detalji:`${V("detalji")&&det.some(([,v])=>v&&String(v).trim())?`<div class="s-blk" style="margin-bottom:8px"><h3>${t.n}</h3>${kv(det)}</div>`:""}${txt}`,
    dodatna:`${(n.dodatna&&n.dodatna.length&&V("dxVrsta"))?`<div class="s-blk"><h3>Dodatna oprema</h3></div><table class="s-tbl"><thead><tr><th>Vrsta</th><th>Model</th>${mode==="interni"?"<th>Šifra</th>":""}${V("dxStanje")?"<th>Stanje</th>":""}<th>Vlasn.</th>${V("dxSn")?"<th>Serijski broj</th>":""}</tr></thead><tbody>${n.dodatna.map(o=>`<tr><td>${esc(o.vrsta)}${o.ex&&Object.keys(o.ex).length?`<div style="color:var(--sm);font-size:12px">${esc(Object.entries(o.ex).filter(([k])=>V("iccid")||!/ICCID/.test(k)).map(([k,v])=>k+": "+v).join(", "))}</div>`:""}</td><td>${esc(o.model)}</td>${mode==="interni"?`<td class="mono">${esc(o.sifra||"")}</td>`:""}${V("dxStanje")?`<td>${esc(o.stanje)}</td>`:""}<td>${esc(o.vl||"")}</td>${V("dxSn")?`<td class="mono">${esc(o.sn)}</td>`:""}</tr>`).join("")}</tbody></table>`:""}${(n.oprema&&n.oprema.length&&mode==="interni")?`<div class="s-blk"><h3>Oprema</h3></div><table class="s-tbl"><thead><tr><th>Naziv</th><th>Serijski broj / IMEI</th><th style="width:60px">Kol.</th></tr></thead><tbody>${n.oprema.map(o=>`<tr><td>${esc(o.naziv)}</td><td class="mono">${esc(o.sn)}</td><td>${esc(o.kol)}</td></tr>`).join("")}</tbody></table>`:""}`,
-   rad:`<div class="s-blk"><h3>Rad</h3>${kv([["Datum",fmtD(r.datum)],["Serviser",H("serviser",esc(r.serviser))],["Radno vreme",H("vreme",[r.od,r.do].filter(Boolean).map(esc).join(" – "))],["Trajanje rada",H("vreme",r.trajanjeMin!=null?esc(fmtDur(r.trajanjeMin)):"")],["Pauze",H("pauze",r.pauzeMin?esc(fmtDur(r.pauzeMin)):"")]])}</div>`,
+   rad:`<div class="s-blk"><h3>Rad</h3>${kv([["Datum",fmtD(r.datum)],[(r.serviseri||[]).length?"Serviseri":"Serviser",H("serviser",esc(srvTxt(r)))],["Radno vreme",H("vreme",[r.od,r.do].filter(Boolean).map(esc).join(" – "))],["Trajanje rada",H("vreme",r.trajanjeMin!=null?esc(fmtDur(r.trajanjeMin)):"")],["Pauze",H("pauze",r.pauzeMin?esc(fmtDur(r.pauzeMin)):"")]])}</div>`,
    napomena:`${n.napomena&&V("napomena")?`<div class="s-blk"><h3>Napomena</h3><p class="s-txt">${esc(n.napomena)}</p></div>`:""}`,
    foto:`${(n.fotoIds&&n.fotoIds.length&&V("foto"))?`<div class="s-blk"><h3>Fotografije (${n.fotoIds.length})</h3></div><div class="s-ph">${n.fotoIds.map(i=>`<img src="${BLOB}${esc(i)}" alt="" crossorigin="anonymous">`).join("")}</div>`:""}`};
    const o=redosled(),out=[];
@@ -1617,12 +1717,35 @@ function sheet(n,mode){
   <div class="s-foot"><span>${esc(n.broj)}</span><span>Sačuvano ${new Date(n.createdAt||Date.now()).toLocaleString("sr-RS")}${mode==="interni"&&n.izmene&&n.izmene.length?` · izmenjeno ${n.izmene.length}×, poslednji put ${new Date(n.izmene[n.izmene.length-1].kada).toLocaleString("sr-RS")}`:""}</span></div>
  </div>`;
 }
+/* ---------- fotografije u punoj veličini (samo na ekranu; PDF ostaje sa umanjenim slikama) ---------- */
+function fotoView(ids,start){if(!ids||!ids.length)return;let i=Math.max(0,Math.min(start||0,ids.length-1));
+  const box=document.createElement("div");box.className="lb";box.setAttribute("role","dialog");box.setAttribute("aria-label","Fotografije");
+  box.innerHTML=`<div class="lb-top"><span class="lb-c"></span><span class="lb-sp"></span><a class="btn sm lb-o" target="_blank" rel="noopener">Otvori original</a><a class="btn sm lb-d" download>Preuzmi</a><button type="button" class="btn sm lb-x" aria-label="Zatvori">Zatvori ✕</button></div>
+    <div class="lb-st"><button type="button" class="lb-n lb-p" aria-label="Prethodna">‹</button><img class="lb-i" alt=""><button type="button" class="lb-n lb-nx" aria-label="Sledeća">›</button></div>
+    <div class="lb-th">${ids.map((id,k)=>`<button type="button" data-k="${k}"><img src="${BLOB}${esc(id)}" alt="" loading="lazy"></button>`).join("")}</div>`;
+  document.body.appendChild(box);document.body.classList.add("lb-on");
+  const img=box.querySelector(".lb-i");
+  const show=()=>{const u=BLOB+ids[i];img.src=u;box.querySelector(".lb-c").textContent=`${i+1} / ${ids.length}`;box.querySelector(".lb-o").href=u;box.querySelector(".lb-d").href=u;
+    box.querySelector(".lb-d").setAttribute("download",`foto-${i+1}.jpg`);box.querySelectorAll(".lb-th button").forEach((b,k)=>b.classList.toggle("on",k===i));
+    box.querySelector(".lb-th .on")?.scrollIntoView({block:"nearest",inline:"center"});const one=ids.length<2;box.querySelectorAll(".lb-n").forEach(b=>b.hidden=one);box.querySelector(".lb-th").hidden=one};
+  const go=d=>{i=(i+d+ids.length)%ids.length;show()};
+  const close=()=>{box.remove();document.body.classList.remove("lb-on");removeEventListener("keydown",key)};
+  const key=e=>{if(e.key==="Escape")close();else if(e.key==="ArrowLeft")go(-1);else if(e.key==="ArrowRight")go(1)};addEventListener("keydown",key);
+  box.querySelector(".lb-x").onclick=close;box.querySelector(".lb-p").onclick=()=>go(-1);box.querySelector(".lb-nx").onclick=()=>go(1);
+  box.querySelector(".lb-th").onclick=e=>{const b=e.target.closest("[data-k]");if(b){i=+b.dataset.k;show()}};
+  box.querySelector(".lb-st").addEventListener("click",e=>{if(e.target.classList.contains("lb-st"))close()});
+  let x0=null;img.addEventListener("touchstart",e=>{x0=e.touches[0].clientX},{passive:true});img.addEventListener("touchend",e=>{if(x0==null)return;const dx=e.changedTouches[0].clientX-x0;x0=null;if(Math.abs(dx)>50)go(dx<0?1:-1)});
+  img.addEventListener("click",()=>img.classList.toggle("zoom"));
+  show()}
+$("#dFoto").onclick=()=>{const n=vis().find(x=>x.id===curId);if(n)fotoView(n.fotoIds,0)};
+$("#dBody").addEventListener("click",e=>{const im=e.target.closest(".s-ph img");if(!im)return;const n=vis().find(x=>x.id===curId);if(!n)return;fotoView(n.fotoIds,[...im.parentElement.children].indexOf(im))});
 function renderDetail(){
   const n=vis().find(x=>x.id===curId);$("#dConfirm").innerHTML="";
   $("#dDel").hidden=!(can("brisanje")&&n);$("#dEdit").hidden=!((can("izmena")||canFix(n))&&n);$("#dMail").hidden=!(n&&(isAdmin()||can("izmena")||n.createdBy===myId));$("#dPdf").hidden=!can("pdf");$("#dPdf").disabled=!n||!downloads;
   $("#dPdf").title=downloads?"":"Preuzimanje fajlova nije dostupno u ovom prikazu";
   const ci=can("pdfInterni");if(!ci)dView="klijent";$("#dSeg").hidden=!ci||!n;$("#dv_k").checked=dView==="klijent";$("#dv_i").checked=dView==="interni";
   $("#dPdf").textContent=dView==="interni"?"Preuzmi interni PDF":"Preuzmi PDF za klijenta";
+  const nf=(n&&n.fotoIds||[]).length;$("#dFoto").hidden=!nf;$("#dFoto").textContent=`Fotografije (${nf})`;
   renderProv(n);renderTestIshod(n);
   $("#dBody").innerHTML=n?sheet(n,dView):`<div class="empty">${loaded?(nalozi.some(x=>x.id===curId)?"Ovaj nalog nije dostupan za vašu ulogu.":"Nalog nije pronađen. Možda je obrisan."):"Učitavanje naloga…"}</div>`;
 }
@@ -1765,11 +1888,11 @@ $("#uForm").addEventListener("submit",async e=>{e.preventDefault();$("#nuMsg").t
 /* ---------- CSV ---------- */
 $("#csvBtn").onclick=async()=>{if(!downloads||!can("izvoz"))return;
   const q=$("#q").value.trim().toLowerCase();
-  const rows=visF().filter(n=>(filt==="sve"||n.tip===filt)&&(!q||[n.broj,n.klijent?.naziv,nTitle(n),...((n.kolicine?.stavke)||[]).map(o=>o.oprema+" "+o.sn),n.kalibracija?.sn,n.vozilo?.reg,n.detalji?.imei,n.uredjaj?.imei,n.uredjaj?.iccid,n.uredjaj?.iccid2,n.rad?.serviser].join(" ").toLowerCase().includes(q)));
+  const rows=visF().filter(n=>(filt==="sve"||n.tip===filt)&&(!q||[n.broj,n.klijent?.naziv,nTitle(n),...((n.kolicine?.stavke)||[]).map(o=>o.oprema+" "+o.sn),n.kalibracija?.sn,n.vozilo?.reg,srvTxt(n.rad),n.detalji?.imei,n.uredjaj?.imei,n.uredjaj?.iccid,n.uredjaj?.iccid2,n.rad?.serviser].join(" ").toLowerCase().includes(q)));
   const H=["Broj","Vrsta posla","Datum","Klijent","PIB","Reg. oznaka","Marka i model","Vrsta vozila","Godište vozila","Serviser","Početak rada","Kraj rada","Trajanje rada (min)","Pauze (min)","Lokacija rada","Model GPS uređaja","Stanje GPS uređaja","IMEI","ICCID SIM1","Operater SIM1","ICCID SIM2","Operater SIM2","Dodatna oprema","Napomena","Tip saradnje","Status provere","Napomena provere","Intervencije","Naplatiti klijentu (manipulacija)","Šifre – ugrađeno (razduženje)","Šifre – skinuto","Vraća se u magacin polovne robe (M)","Predao","Preuzeo / serviser","Stavke (količine)","Ukupno komada","Ishod testa","Seoba","Kalibracija"];
   const c=v=>{v=String(v??"");return /[";\n\r]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v};
   const lines=[H.join(";")].concat(rows.map(n=>{const r=n.rad||{};
-    return [n.broj,(TIP[n.tip]||TIP.ostalo).n,fmtD(r.datum),n.klijent?.naziv,n.klijent?.pib,n.vozilo?.reg,n.vozilo?.model,n.vozilo?.vrsta,n.vozilo?.god,r.serviser,r.od,r.do,r.trajanjeMin??"",r.pauzeMin??"",n.lokacija?[n.lokacija.adresa,n.lokacija.lat!=null?`${(+n.lokacija.lat).toFixed(6)}, ${(+n.lokacija.lng).toFixed(6)}`:""].filter(Boolean).join(" – "):"",n.uredjaj?.model||n.detalji?.uredjaj,n.uredjaj?.stanje,n.uredjaj?.imei||n.detalji?.imei,n.uredjaj?.iccid,n.uredjaj?.op1||n.detalji?.operater,n.uredjaj?.iccid2,n.uredjaj?.op2,[...(n.dodatna||[]).map(o=>[o.vrsta,o.model,o.stanje,o.sn&&("SN "+o.sn)].filter(Boolean).join(" ")),...(n.oprema||[]).map(o=>`${o.naziv} ${o.sn} x${o.kol}`)].join(", "),n.napomena,klMod(n),provS(n)?PROV[provS(n)][0]:"",n.provera?.nap||"",(n.intervencije||[]).map(o=>[o.oprema+" – "+(RADNJA[o.radnja]||o.radnja),o.sk&&o.sk.id&&("skinuto "+[o.sk.model,o.sk.id,o.sk.stanje].filter(Boolean).join(" ")),o.nv&&o.nv.id&&("ugrađeno "+[o.nv.model,o.nv.id,o.nv.stanje,o.nv.iccid&&"SIM "+o.nv.iccid].filter(Boolean).join(" ")),o.opis,o.manip&&"MANIPULACIJA"].filter(Boolean).join(", ")).join(" | "),(n.intervencije||[]).some(o=>o.manip)?"DA":"",sifreUgr(n),sifreSk(n),uMagacin(n),n.kolicine?.predao||"",n.kolicine?.preuzeo||n.kolicine?.serviser||"",((n.kolicine?.stavke)||[]).map(o=>[o.sifra,o.model||o.oprema,"×"+o.kol,o.sn&&"("+o.sn+")"].filter(Boolean).join(" ")).join(", "),n.kolicine?((n.kolicine.stavke||[]).reduce((a,o)=>a+(+o.kol||0),0)):"",n.tip==="test"?(n.testIshod||"u toku"):"",n.tip==="seoba"?(n.detalji?.smer||""):"",n.kalibracija?.oprema?[n.kalibracija.oprema,n.kalibracija.model,n.kalibracija.sn,n.kalibracija.adresa&&"adresa "+n.kalibracija.adresa,n.kalibracija.duzSonde&&"sonda "+n.kalibracija.duzSonde+" cm",n.kalibracija.oblik,[n.kalibracija.sirina,n.kalibracija.duzina,n.kalibracija.visina].some(Boolean)&&[n.kalibracija.sirina,n.kalibracija.duzina,n.kalibracija.visina].join("×")+" cm",n.kalibracija.zapremina&&n.kalibracija.zapremina+" L",(n.kalibracija.redovi||[]).length+" redova"].filter(Boolean).join(", "):""].map(c).join(";")}));
+    return [n.broj,(TIP[n.tip]||TIP.ostalo).n,fmtD(r.datum),n.klijent?.naziv,n.klijent?.pib,n.vozilo?.reg,n.vozilo?.model,n.vozilo?.vrsta,n.vozilo?.god,srvTxt(r),r.od,r.do,r.trajanjeMin??"",r.pauzeMin??"",n.lokacija?[n.lokacija.adresa,n.lokacija.lat!=null?`${(+n.lokacija.lat).toFixed(6)}, ${(+n.lokacija.lng).toFixed(6)}`:""].filter(Boolean).join(" – "):"",n.uredjaj?.model||n.detalji?.uredjaj,n.uredjaj?.stanje,n.uredjaj?.imei||n.detalji?.imei,n.uredjaj?.iccid,n.uredjaj?.op1||n.detalji?.operater,n.uredjaj?.iccid2,n.uredjaj?.op2,[...(n.dodatna||[]).map(o=>[o.vrsta,o.model,o.stanje,o.sn&&("SN "+o.sn)].filter(Boolean).join(" ")),...(n.oprema||[]).map(o=>`${o.naziv} ${o.sn} x${o.kol}`)].join(", "),n.napomena,klMod(n),provS(n)?PROV[provS(n)][0]:"",n.provera?.nap||"",(n.intervencije||[]).map(o=>[o.oprema+" – "+(RADNJA[o.radnja]||o.radnja),o.sk&&o.sk.id&&("skinuto "+[o.sk.model,o.sk.id,o.sk.stanje].filter(Boolean).join(" ")),o.nv&&o.nv.id&&("ugrađeno "+[o.nv.model,o.nv.id,o.nv.stanje,o.nv.iccid&&"SIM "+o.nv.iccid].filter(Boolean).join(" ")),o.opis,o.manip&&"MANIPULACIJA"].filter(Boolean).join(", ")).join(" | "),(n.intervencije||[]).some(o=>o.manip)?"DA":"",sifreUgr(n),sifreSk(n),uMagacin(n),n.kolicine?.predao||"",n.kolicine?.preuzeo||n.kolicine?.serviser||"",((n.kolicine?.stavke)||[]).map(o=>[o.sifra,o.model||o.oprema,"×"+o.kol,o.sn&&"("+o.sn+")"].filter(Boolean).join(" ")).join(", "),n.kolicine?((n.kolicine.stavke||[]).reduce((a,o)=>a+(+o.kol||0),0)):"",n.tip==="test"?(n.testIshod||"u toku"):"",n.tip==="seoba"?(n.detalji?.smer||""):"",n.kalibracija?.oprema?[n.kalibracija.oprema,n.kalibracija.model,n.kalibracija.sn,n.kalibracija.adresa&&"adresa "+n.kalibracija.adresa,n.kalibracija.duzSonde&&"sonda "+n.kalibracija.duzSonde+" cm",n.kalibracija.oblik,[n.kalibracija.sirina,n.kalibracija.duzina,n.kalibracija.visina].some(Boolean)&&[n.kalibracija.sirina,n.kalibracija.duzina,n.kalibracija.visina].join("×")+" cm",n.kalibracija.zapremina&&n.kalibracija.zapremina+" L",(n.kalibracija.redovi||[]).length+" redova"].filter(Boolean).join(", "):""].map(c).join(";")}));
   try{await downloads.save({filename:`radni-nalozi-${new Date().toLocaleDateString("sv-SE")}.csv`,data:"﻿"+lines.join("\r\n")});toast(`Izvezeno ${rows.length} naloga.`)}catch(e){toast("Izvoz je otkazan.")}};
 
 /* ---------- settings ---------- */
