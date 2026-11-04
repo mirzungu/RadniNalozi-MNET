@@ -60,26 +60,31 @@
   }
 
   // ---------- prijava ----------
+  // poseban link za glavni nalog: …/radni-nalozi-panel/?platforma – prijava u bojama platforme, bez loga firme
+  const PLAT = /[?&#]platforma\b/i.test(location.search + location.hash);
+  if (PLAT) { document.documentElement.classList.add("plat-link"); document.title = "Radni nalozi · Platforma"; }
+  const LAST_U = PLAT ? "rn_last_user_plat" : "rn_last_user";
   function loginScreen() {
     return new Promise((resolve) => {
       const msg = ls.get("rn_login_msg") || "";
       ls.del("rn_login_msg");
       const box = document.createElement("div");
-      box.className = "login-wrap";
+      box.className = "login-wrap" + (PLAT ? " plat-login" : "");
       box.innerHTML =
         '<div class="login-col"><div class="login-logo"></div><form class="login" novalidate>' +
-        '<h1>Prijava</h1><p class="lead">Radni nalozi servisa na terenu</p>' +
+        '<h1>Prijava</h1><p class="lead">' + (PLAT ? "Platforma – glavni administrator" : "Radni nalozi servisa na terenu") + '</p>' +
         '<div class="f"><label class="l" for="lg_u">Korisničko ime ili e-pošta</label><input type="text" id="lg_u" autocomplete="username" autocapitalize="none"></div>' +
         '<div class="f"><label class="l" for="lg_p">Lozinka</label><input type="password" id="lg_p" autocomplete="current-password"></div>' +
         '<div class="msg" role="alert"></div><button type="submit" class="btn pri">Prijavi se</button></form></div>';
       document.body.appendChild(box);
       // svetao logo na tamnoj pozadini – vidi se i u svetloj i u tamnoj temi telefona
       const lg = window.RN_LOGO_W || window.RN_LOGO_D;
-      if (lg) box.querySelector(".login-logo").innerHTML = '<img src="' + lg + '" alt="MonitoringNET">';
+      if (PLAT) box.querySelector(".login-logo").innerHTML = '<div class="plat-brand plat-brand-lg"><span class="plat-mark" aria-hidden="true">RN</span><span><b>Radni nalozi</b><small>Platforma</small></span></div>';
+      else if (lg) box.querySelector(".login-logo").innerHTML = '<img src="' + lg + '" alt="MonitoringNET">';
       const m = box.querySelector(".msg");
       m.textContent = msg;
-      box.querySelector("#lg_u").value = ls.get("rn_last_user") || "";
-      setTimeout(() => box.querySelector(ls.get("rn_last_user") ? "#lg_p" : "#lg_u").focus(), 50);
+      box.querySelector("#lg_u").value = ls.get(LAST_U) || "";
+      setTimeout(() => box.querySelector(ls.get(LAST_U) ? "#lg_p" : "#lg_u").focus(), 50);
       box.querySelector("form").addEventListener("submit", async (e) => {
         e.preventDefault();
         const b = box.querySelector("button");
@@ -90,7 +95,7 @@
           if (error) throw error;
           const u = await loadMe();
           if (!u) throw new Error(ls.get("rn_login_msg") || "Nalog nije aktivan.");
-          ls.set("rn_last_user", login);
+          ls.set(LAST_U, login);
           box.remove();
           resolve(u);
         } catch (err) {
