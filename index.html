@@ -364,7 +364,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
       <div class="sec-h"><h2>Kalibracija</h2><small id="kalCount"></small></div>
       <div class="grid">
         <div class="f"><label class="l req" for="kal_op">Oprema</label><select id="kal_op"><option value="">— izaberite —</option><option>Sonda</option><option>RPM</option></select></div>
-        <div class="f"><label class="l" for="kal_model">Model</label><input type="text" id="kal_model" list="kalML" placeholder="izaberite ili upišite"><datalist id="kalML"></datalist></div>
+        <div class="f" id="kal_modelW"><label class="l" for="kal_model">Model</label><input type="text" id="kal_model" list="kalML" placeholder="izaberite ili upišite"><datalist id="kalML"></datalist></div>
         <div class="f"><label class="l" for="kal_sn">Serijski broj</label><input type="text" id="kal_sn" class="mono" autocomplete="off"></div>
         <div class="f" id="kal_zapW"><label class="l" for="kal_zap">Zapremina rezervoara (L)</label><input type="number" id="kal_zap" inputmode="decimal" min="0" step="any"></div>
       </div>
@@ -761,7 +761,7 @@ function renderTipFields(){
   applySecs();$("#tipTitle").textContent=t.n;$("#tipSec").style.borderTop=`4px solid var(${t.c})`;
   $("#tipFields").innerHTML=t.p.map(p=>{
     const id="d_"+p.k,lab=`<label class="l${p.r?" req":""}" for="${id}">${p.l}</label>`;
-    if(p.t==="sel")return `<div class="f">${lab}<select id="${id}" ${p.r?"data-req":""}><option value="">— izaberite —</option>${p.o.map(o=>`<option>${esc(o)}</option>`).join("")}</select></div>`;
+    if(p.t==="sel")return `<div class="f">${lab}<select id="${id}" ${p.r?"data-req":""}><option value="">— izaberite —</option>${p.o.map(o=>`<option>${esc(o)}</option>`).join("")}</select></div>`+(p.o.includes("Drugo")?`<div class="f" id="${id}_drW" hidden><label class="l req" for="${id}_dr">${esc(p.l)} – navedite</label><input type="text" id="${id}_dr" placeholder="upišite"></div>`:"");
     if(p.t==="txt")return `<div class="f full">${lab}<textarea id="${id}" ${p.r?"data-req":""}></textarea></div>`;
     if(p.t==="chk")return `<div class="f full"><span class="l">${p.l}</span><div class="checks" id="${id}">${p.o.map((o,i)=>`<label class="chk"><input type="checkbox" id="${id}_${i}" value="${esc(o)}">${esc(o)}</label>`).join("")}</div></div>`;
     if(p.t==="num")return `<div class="f">${lab}<input type="number" id="${id}" inputmode="decimal" min="0" step="any" ${p.r?"data-req":""}></div>`;
@@ -777,7 +777,7 @@ function addDx(v={},focus){
   d.innerHTML=`<div class="dop-h"><b></b><button type="button" class="xbtn" aria-label="Ukloni opremu">×</button></div>
    <div class="grid">
     <div class="f"><label class="l req" for="dx_v_${i}">Vrsta opreme</label><input type="text" id="dx_v_${i}" class="dx-v" list="dopList" placeholder="npr. RFID čitač" value="${esc(v.vrsta||"")}"></div>
-    <div class="f"><label class="l" for="dx_m_${i}">Model</label><input type="text" id="dx_m_${i}" class="dx-m" list="dx_ml_${i}" value="${esc(v.model||"")}"><datalist id="dx_ml_${i}" class="dx-ml"></datalist><small class="hint sifra-h dx-sh"></small></div>
+    <div class="f dx-mW"><label class="l" for="dx_m_${i}">Model</label><input type="text" id="dx_m_${i}" class="dx-m" list="dx_ml_${i}" value="${esc(v.model||"")}"><datalist id="dx_ml_${i}" class="dx-ml"></datalist><small class="hint sifra-h dx-sh"></small></div>
     <div class="f dx-stW"><span class="l req" id="dx_sl_${i}">Stanje</span><div class="seg dx-s" role="radiogroup" aria-labelledby="dx_sl_${i}"><label class="chk"><input type="radio" name="dx_s_${i}" id="dx_sn_${i}" value="Nov"${v.stanje==="Nov"?" checked":""}>Nov</label><label class="chk"><input type="radio" name="dx_s_${i}" id="dx_sp_${i}" value="Polovan"${v.stanje==="Polovan"?" checked":""}>Polovan</label></div></div>
     <div class="f dx-vlW"><span class="l req">Vlasništvo</span>${vlSeg("dx_vl_"+i,v.vl||(v.vrsta?"":vlDef()))}</div>
     <div class="f dx-snW"><label class="l" for="dx_n_${i}">Serijski broj</label><div class="scan"><input type="text" id="dx_n_${i}" class="mono dx-n" autocomplete="off" value="${esc(v.sn||"")}"><label class="btn scan-b" title="Slikajte bar ili QR kod">${SCANICO}Skeniraj<input type="file" accept="image/*" capture="environment" data-scan="sn" hidden></label></div><small class="hint dx-h"></small></div>
@@ -787,8 +787,8 @@ function addDx(v={},focus){
   const exDraw=()=>{const vr=d.querySelector(".dx-v").value;const k=kKey(vr)+"|"+bezModela(vr);if(k===exKey)return;
     if(exKey!==null)exVals={...exVals,...exRead(d.querySelector(".dx-ex"))};exKey=k;
     d.querySelector(".dx-ex").innerHTML=exHtml(vr,"u",exVals);
-    const bm=bezModela(vr);["dx-stW","dx-vlW","dx-snW"].forEach(c=>d.querySelector("."+c).hidden=bm)};
-  d.querySelector(".xbtn").onclick=()=>{d.remove();dxNum();dSave()};$("#dxList").appendChild(d);dxNum();
+    const bm=bezModela(vr);["dx-stW","dx-vlW","dx-snW","dx-mW"].forEach(c=>d.querySelector("."+c).hidden=bm)};
+  d._exDraw=exDraw;d.querySelector(".xbtn").onclick=()=>{d.remove();dxNum();dSave()};$("#dxList").appendChild(d);dxNum();
   const dv=d.querySelector(".dx-v");dv.addEventListener("input",()=>{dxModels(d);exDraw()});dv.addEventListener("change",()=>{dxModels(d);exDraw()});dxModels(d);exDraw();
   if(focus){d.scrollIntoView({behavior:"smooth",block:"center"});setTimeout(()=>d.querySelector(".dx-v").focus(),250)}
 }
@@ -820,7 +820,7 @@ function applySecs(){const S=secOf(tip),t=TIP[tip];
 /* ---------- kalibracija ---------- */
 const KALC={Sonda:["Očitavanje (N)","Litara"],RPM:["Vrednost na uređaju (mV)","Broj obrtaja"]};
 function kalRender(){const op=$("#kal_op").value||"Sonda",c=KALC[op];$("#kalA").textContent=c[0];$("#kalB").textContent=c[1];$("#kal_zapW").hidden=op!=="Sonda";
-  $("#kalML").innerHTML=modelOpts(katalog().filter(o=>o.model&&kKey(o.vrsta)===kKey(op)));kalNum()}
+  const km=katalog().filter(o=>o.model&&kKey(o.vrsta)===kKey(op));$("#kalML").innerHTML=modelOpts(km);$("#kal_modelW").hidden=!km.length;if(!km.length)$("#kal_model").value="";kalNum()}
 function kalNum(){[...$("#kalRows").children].forEach((r,i)=>r.firstElementChild.textContent=i+1);const n=$("#kalRows").children.length;$("#kalCount").textContent=n?`${n} ${n===1?"red":n<5?"reda":"redova"}`:""}
 function kalAdd(a="",b="",focus){const tr=document.createElement("tr");
   tr.innerHTML=`<td class="stat"></td><td><input type="number" step="any" inputmode="decimal" class="kal-a" value="${esc(a)}" aria-label="Prva vrednost"></td><td><input type="number" step="any" inputmode="decimal" class="kal-b" value="${esc(b)}" aria-label="Druga vrednost"></td><td><button type="button" class="xbtn" aria-label="Ukloni red">×</button></td>`;
@@ -870,15 +870,17 @@ const FUNKCIJE=["Rad ruke","Rad pumpe","PTO","Vrata","Kontakt","Taster za alarm"
 const fnEx={u:[{l:"Povezano",t:"sel",o:["Žicom direktno na GPS","Preko senzora"]},{l:"Ulaz na GPS-u",t:"txt",ph:"npr. DIN2, AIN1"}],d:[{l:"Raskačeno",t:"sel",o:DN}]};
 const EXTRA={
  "gps uređaj":{i:[{l:"Zamena osigurača",t:"sel",o:["NE","2A","3A","5A"]}]},
- "can":{u:[{l:"CAN1 povezan",t:"sel",o:DN},{l:"CAN2 povezan",t:"sel",o:DN},{l:"FMS konektor",t:"sel",o:DN},{l:"Godina proizvodnje vozila",t:"num"}],d:[{l:"Raskačen",t:"sel",o:DN}]},
- "canlog":{u:[{l:"CAN1 povezan",t:"sel",o:DN},{l:"CAN2 povezan",t:"sel",o:DN},{l:"Godina proizvodnje vozila",t:"num"}]},
- "can beskontaktni":{u:[{l:"Količina",t:"sel",o:["1","2"]},{l:"Godina proizvodnje vozila",t:"num"}],d:[{l:"Količina",t:"sel",o:["1","2"]}]},
+ "can":{u:[{l:"CAN1 povezan",t:"sel",o:DN},{l:"CAN2 povezan",t:"sel",o:DN},{l:"FMS konektor",t:"sel",o:DN}],d:[{l:"Raskačen",t:"sel",o:DN}]},
+ "canlog":{u:[{l:"CAN1 povezan",t:"sel",o:DN},{l:"CAN2 povezan",t:"sel",o:DN}]},
+ "can beskontaktni":{u:[{l:"Količina",t:"sel",o:["1","2"]}],d:[{l:"Količina",t:"sel",o:["1","2"]}]},
  "protokomer":{u:[{l:"Filter (kom)",t:"sel",o:["NE","1","2","3"]},{l:"Crevo (m)",t:"num"},{l:"Zaštita protokomera",t:"sel",o:DN}],
    d:[{l:"Demontaža creva",t:"sel",o:DN},{l:"Demontaža filtera",t:"sel",o:DN}],
    s:[{l:"Čišćenje filtera",t:"sel",o:DN},{l:"Zamena filtera (kom)",t:"num"},{l:"Zamena creva (m)",t:"num"},{l:"Rekonfiguracija protokomera",t:"sel",o:DN},{l:"Plombiranje konektora",t:"sel",o:DN}],
    i:[{l:"Zamena kompletne instalacije",t:"sel",o:DN}]},
- "rpm":{u:[{l:"Način povezivanja",t:"sel",o:["RPM senzor","Alternator (W)","Drugo"]}]},
- "relej":{u:[{l:"Napon releja",t:"sel",o:["Relej 12V","Relej 24V","Relej 220V"]},{l:"Namena",t:"sel",o:["Prekid startovanja motora","Drugo"]}],d:[{l:"Napon releja",t:"sel",o:["Relej 12V","Relej 24V","Relej 220V"]}]},
+ "rpm":{u:[{l:"Način povezivanja",t:"sel",o:["RPM senzor","Alternator (W)","Drugo"],drugoL:"Način povezivanja – navedite"}]},
+ "prekidač":{u:[{l:"Namena prekidača",t:"sel",o:["Panik taster","Privatna / poslovna vožnja","Drugo"],drugoL:"Za šta služi prekidač"}],
+   d:[{l:"Namena prekidača",t:"sel",o:["Panik taster","Privatna / poslovna vožnja","Drugo"]}]},
+ "relej":{u:[{l:"Napon releja",t:"sel",o:["Relej 12V","Relej 24V","Relej 220V"]},{l:"Namena",t:"sel",o:["Prekid startovanja motora","Drugo"],drugoL:"Namena releja"}],d:[{l:"Napon releja",t:"sel",o:["Relej 12V","Relej 24V","Relej 220V"]}]},
  "sd kartica":{u:[{l:"Količina",t:"sel",o:["1","2","3"]}],d:[{l:"Količina",t:"sel",o:["1","2","3"]}],s:[{l:"Formatiranje SD kartice",t:"sel",o:DN}]},
  "roaming sim":{u:[{l:"ICCID",t:"iccid"},{l:"SIM slot",t:"sel",o:["SIM0","SIM1"]}]}
 };
@@ -886,13 +888,24 @@ FUNKCIJE.forEach(f=>EXTRA[f.toLowerCase()]=fnEx);
 const exDef=(vrsta,ctx)=>((EXTRA[kKey(vrsta)]||{})[ctx])||[];
 // oprema bez modela u katalogu (CAN, funkcije, antene, relej…): nema stanja, vlasništva ni šifre
 const bezModela=vrsta=>!!kKey(vrsta)&&!isGps(vrsta)&&!katalog().some(o=>kVrsta(o,vrsta)&&o.model);
-function exHtml(vrsta,ctx,vals,pre){vals=vals||{};return exDef(vrsta,ctx).map(f=>{const key=(pre?pre+" – ":"")+f.l,v=vals[key]??"";
+// „Drugo" u padajućem meniju otvara obavezno polje za opis; čuva se kao „Drugo – opis"
+const DR="Drugo – ";
+function exHtml(vrsta,ctx,vals,pre){vals=vals||{};return exDef(vrsta,ctx).map(f=>{const key=(pre?pre+" – ":"")+f.l;let v=vals[key]??"",dv="";
+  const isDr=f.t==="sel"&&f.o.includes("Drugo");if(isDr&&String(v).startsWith(DR)){dv=String(v).slice(DR.length);v="Drugo"}
+  const drHtml=isDr?`<div class="f ex-dr"${v==="Drugo"?"":" hidden"}><span class="l req">${esc(f.drugoL||f.l+" – navedite")}</span><input type="text" data-exdr="${esc(key)}" value="${esc(dv)}" placeholder="upišite"></div>`:"";
   const inner=f.t==="sel"?`<select data-ex="${esc(key)}"><option value="">—</option>${f.o.map(o=>`<option${v===o?" selected":""}>${esc(o)}</option>`).join("")}</select>`
    :f.t==="num"?`<input type="number" data-ex="${esc(key)}" inputmode="decimal" min="0" step="any" value="${esc(v)}">`
    :f.t==="iccid"?`<div class="scan"><input type="text" class="mono" data-ex="${esc(key)}" inputmode="numeric" maxlength="22" placeholder="89…" value="${esc(v)}"><label class="btn scan-b" title="Slikajte bar ili QR kod">${SCANICO}Skeniraj<input type="file" accept="image/*" capture="environment" data-scan="iv-iccid" hidden></label></div><small class="hint iv-h"></small>`
-   :`<input type="text" data-ex="${esc(key)}" value="${esc(v)}" placeholder="${esc(f.ph||"")}">`;
-  return `<div class="f"><span class="l">${esc(f.l)}</span>${inner}</div>`}).join("")}
-const exRead=el=>{const o={};el.querySelectorAll("[data-ex]").forEach(e=>{const v=e.value.trim();if(v)o[e.dataset.ex]=v});return o};
+   :`<input type="text" data-ex="${esc(key)}" value="${esc(v)}" placeholder="${esc(f.ph||"")}"${f.reqIf?` data-reqif="${esc((pre?pre+" – ":"")+f.reqIf[0])}|${esc(f.reqIf[1])}"`:""}>`;
+  return `<div class="f"><span class="l">${esc(f.l)}</span>${inner}</div>`+drHtml}).join("")}
+// polje obavezno samo kad drugo polje ima određenu vrednost (npr. „Za šta služi" kad je namena „Drugo")
+function exReqCheck(el){for(const e of el.querySelectorAll("[data-exdr]")){const o=el.querySelector(`[data-ex="${CSS.escape(e.dataset.exdr)}"]`);
+  if(o&&o.value==="Drugo"&&!e.value.trim()){e.classList.add("invalid");return e}}return null}
+const exRead=el=>{const o={};el.querySelectorAll("[data-ex]").forEach(e=>{let v=e.value.trim();
+  if(v==="Drugo"){const t=el.querySelector(`[data-exdr="${CSS.escape(e.dataset.ex)}"]`);if(t&&t.value.trim())v=DR+t.value.trim()}if(v)o[e.dataset.ex]=v});return o};
+document.addEventListener("change",e=>{const t=e.target;
+  if(t.matches&&t.matches("select[data-ex]")){const box=t.closest(".iv-f,.dx-ex");const d=box&&box.querySelector(`[data-exdr="${CSS.escape(t.dataset.ex)}"]`);if(d){d.closest(".f").hidden=t.value!=="Drugo";if(t.value==="Drugo")d.focus()}}
+  if(t.matches&&t.matches("#tipFields select")){const w=$("#"+t.id+"_drW");if(w){w.hidden=t.value!=="Drugo";if(t.value==="Drugo")$("#"+t.id+"_dr").focus()}}});
 const exTxt=ex=>Object.entries(ex||{}).map(([k,v])=>k+": "+v).join(", ");
 
 /* ---------- intervencije (servis) ---------- */
@@ -921,10 +934,10 @@ function ivFieldsHtml(i,op,ra,v){
   const kind=g?"imei":"sn";
   const gpsSim=(pre,o,req)=>F("ICCID – SIM1",scan(pre+"-iccid","iccid",o.iccid,req,"89…"),req)+F("Operater – SIM1",opSel(pre+"-op1",o.op1),req)+F("ICCID – SIM2 (roming)",scan(pre+"-iccid2","iccid",o.iccid2,0,"ako postoji"))+F("Operater – SIM2",opSel(pre+"-op2",o.op2));
   let h="";const bm=bezModela(op),ex=v.ex||{};
-  if(bm&&ra!=="rekonf"){
-    const ctx={zamena:"u",ugradnja:"u",demontaza:"d",servis:"s",instalacija:"i",premestanje:"u",seoba:(val("d_smer")==="Deaktivacija"?"d":"u")}[ra]||"u";
-    const req=["zamena","servis","instalacija"].includes(ra);
-    const lab={zamena:"Šta je zamenjeno i zašto",servis:"Šta je popravljeno",instalacija:"Šta je urađeno",demontaza:"Napomena",ugradnja:"Napomena",premestanje:"Napomena",seoba:"Napomena"}[ra]||"Napomena";
+  if(bm){
+    const ctx=({rekonf:"",zamena:"u",ugradnja:"u",demontaza:"d",servis:"s",instalacija:"i",premestanje:"u",seoba:(val("d_smer")==="Deaktivacija"?"d":"u")})[ra]??"u";
+    const req=["zamena","servis","instalacija","rekonf"].includes(ra);
+    const lab={rekonf:"Šta je podešeno",zamena:"Šta je zamenjeno i zašto",servis:"Šta je popravljeno",instalacija:"Šta je urađeno",demontaza:"Napomena",ugradnja:"Napomena",premestanje:"Napomena",seoba:"Napomena"}[ra]||"Napomena";
     h+=exHtml(op,ctx,ex)+F(lab,`<textarea class="iv-opis"${req?" data-ivreq":""}>${esc(v.opis||"")}</textarea>`,req,1);
   }else if(ra==="premestanje"||ra==="seoba"){
     h+=F("Model",model("iv-sk-model",sk.model))+F(idL,scan("iv-sk-id",kind,sk.id,0,g?"15 cifara":""))+F("Vlasništvo",vlSeg("ivskv_"+i,sk.vl||vlDef()),1)+F("Napomena",`<textarea class="iv-opis">${esc(v.opis||"")}</textarea>`,0,1);
@@ -962,7 +975,7 @@ function addIv(v={},focus){
     if(key===lastKey){const dl=d.querySelector(".iv-f datalist");if(dl)dl.innerHTML=ivModelOpts(op);return}   // ista polja: ne crtati ponovo, samo modeli
     lastKey=key;const cur=first?{sk:{},nv:{}}:ivRead(d);first=false;
     d.querySelector(".iv-f").innerHTML=ra&&op.trim()?ivFieldsHtml(i,op,ra,{...v,...(cur.radnja!==undefined?{opis:cur.opis,manip:cur.manip}:{}),sk:{...(v.sk||{}),...cur.sk},nv:{...(v.nv||{}),...cur.nv},ex:{...(v.ex||{}),...(cur.ex||{})}}):(ra||op?`<div class="f full"><small class="stat">${mode==="servis"?"Izaberite opremu i šta je urađeno.":"Upišite ili izaberite opremu."}</small></div>`:"")};
-  d.querySelector(".iv-op").addEventListener("change",draw);d.querySelector(".iv-ra").addEventListener("change",draw);
+  d._draw=draw;d.querySelector(".iv-op").addEventListener("change",draw);d.querySelector(".iv-ra").addEventListener("change",draw);
   d.querySelector(".xbtn").onclick=()=>{d.remove();ivNum();dSave()};$("#ivList").appendChild(d);draw();ivNum();
   if(focus){d.scrollIntoView({behavior:"smooth",block:"center"});setTimeout(()=>d.querySelector(".iv-op").focus(),250)}
 }
@@ -990,6 +1003,7 @@ function ivValidate(){const L=[...$("#ivList").children];
     d.querySelectorAll(".invalid,.invalid-g").forEach(e=>e.classList.remove("invalid","invalid-g"));
     if(!o.oprema){d.querySelector(".iv-op").classList.add("invalid");return[n+": upišite opremu.",d.querySelector(".iv-op")]}
     for(const e of d.querySelectorAll('[data-ex*="ICCID"]'))if(e.value.trim()&&!okIccid(e.value.trim())){e.classList.add("invalid");return[n+": ICCID mora početi sa 89 i imati 18 do 22 cifre.",e]}
+    {const e=exReqCheck(d);if(e)return[n+": izabrali ste „Drugo” – upišite „"+e.closest(".f").querySelector(".l").textContent+"”.",e]}
     if(!o.radnja){d.querySelector(".iv-ra").classList.add("invalid");return[n+": izaberite šta je urađeno.",d.querySelector(".iv-ra")]}
     for(const e of d.querySelectorAll("[data-ivreq]"))if(!e.value.trim()){e.classList.add("invalid");return[n+": popunite obavezna polja.",e]}
     for(const [nm,lab] of [["ivsks","stanje skinutog"],["ivnvs","stanje ugrađenog"],["ivskv","vlasništvo skinutog (M ili K)"],["ivnvv","vlasništvo ugrađenog (M ili K)"]]){const gr=d.querySelector(`input[name="${nm}_${d.dataset.i}"]`);if(gr&&!d.querySelector(`input[name="${nm}_${d.dataset.i}"]:checked`)){gr.closest(".seg").classList.add("invalid-g");return[n+": označite "+lab+".",gr]}}
@@ -1003,7 +1017,7 @@ function ivUredjaj(list){const g=[...list].reverse().find(o=>ivGps(o.oprema)&&(o
   return g?{model:g.nv.model||"",sifra:g.nv.sifra||"",stanje:g.nv.stanje||"",vl:g.nv.vl||"",imei:g.nv.id,iccid:g.nv.iccid||"",op1:g.nv.op1||"",iccid2:g.nv.iccid2||"",op2:g.nv.op2||""}:{}}
 
 /* katalog opreme (Podešavanja → Oprema i modeli) */
-const DEF_OPREMA=[["GPS uređaj","Teltonika FMB920"],["GPS uređaj","Teltonika FMC130"],["GPS uređaj","Teltonika FMC650"],["GPS uređaj","Teltonika FMB140"],["RFID čitač",""],["Sonda goriva",""],["Kamera",""],["Taster za alarm",""],["Temperaturni senzor",""],["CAN adapter",""],["Identifikacija vozača",""]].map(([vrsta,model])=>({vrsta,model}));
+const DEF_OPREMA=[["GPS uređaj","Teltonika FMB920"],["GPS uređaj","Teltonika FMC130"],["GPS uređaj","Teltonika FMC650"],["GPS uređaj","Teltonika FMB140"],["RFID čitač",""],["Sonda goriva",""],["Kamera",""],["Taster za alarm",""],["Temperaturni senzor",""],["CAN adapter",""],["Identifikacija vozača",""],["Zujalica",""],["Zvučnik",""]].map(([vrsta,model])=>({vrsta,model}));
 const katalog=()=>Array.isArray(firma.oprema)&&firma.oprema.length?firma.oprema:DEF_OPREMA;
 const kKey=v=>(v||"").trim().toLowerCase();
 const kVrsta=(o,vrsta)=>isGps(vrsta)?isGps(o.vrsta):kKey(o.vrsta)===kKey(vrsta);
@@ -1021,9 +1035,10 @@ function dxModels(d){const v=d.querySelector(".dx-v").value.trim().toLowerCase()
 function fillLists(){const k=katalog();$("#gpsList").innerHTML=modelOpts(k.filter(o=>isGps(o.vrsta)));
   $("#dopList").innerHTML=optHtml(uniq(k.filter(o=>!isGps(o.vrsta)).map(o=>o.vrsta)));[...$("#dxList").children].forEach(dxModels);
   $("#ivOpList").innerHTML=optHtml(uniq(["GPS uređaj",...k.map(o=>o.vrsta)]));
-  [...$("#ivList").children].forEach(d=>{const dl=d.querySelector("datalist");if(dl)dl.innerHTML=ivModelOpts(d.querySelector(".iv-op").value)})}
+  [...$("#ivList").children].forEach(d=>{const dl=d.querySelector("datalist");if(dl)dl.innerHTML=ivModelOpts(d.querySelector(".iv-op").value);if(d._draw)d._draw()});
+  [...$("#dxList").children].forEach(d=>d._exDraw&&d._exDraw());if(!$("#kalSec").hidden)kalRender()}
 $("#dxAdd").onclick=()=>{addDx({},true);dSave()};
-const dxData=()=>[...$("#dxList").children].map(d=>{const bm=bezModela(d.querySelector(".dx-v").value);const o={vrsta:d.querySelector(".dx-v").value.trim(),model:d.querySelector(".dx-m").value.trim(),stanje:bm?"":(d.querySelector(".dx-s input:checked")||{}).value||"",vl:bm?"":(d.querySelector('input[name^="dx_vl_"]:checked')||{}).value||"",sn:bm?"":d.querySelector(".dx-n").value.trim(),ex:exRead(d.querySelector(".dx-ex"))};o.sifra=sifraZa(o.vrsta,o.model,o.stanje);return o});
+const dxData=()=>[...$("#dxList").children].map(d=>{const bm=bezModela(d.querySelector(".dx-v").value);const o={vrsta:d.querySelector(".dx-v").value.trim(),model:bm?"":d.querySelector(".dx-m").value.trim(),stanje:bm?"":(d.querySelector(".dx-s input:checked")||{}).value||"",vl:bm?"":(d.querySelector('input[name^="dx_vl_"]:checked')||{}).value||"",sn:bm?"":d.querySelector(".dx-n").value.trim(),ex:exRead(d.querySelector(".dx-ex"))};o.sifra=sifraZa(o.vrsta,o.model,o.stanje);return o});
 
 /* ---------- km ---------- */
 
@@ -1273,6 +1288,7 @@ function validateNalog(){const msg=$("#fMsg");msg.textContent="";
     if(p<0||p*60000>=b-a){msg.textContent="Pauze ne mogu biti duže od ukupnog vremena.";$("#e_pauze").focus();return}}
   let bad=[];document.querySelectorAll("#nf [data-req]").forEach(el=>{if(el.closest("[hidden]"))return;const ok=!!el.value.trim();el.classList.toggle("invalid",!ok);if(!ok)bad.push(el)});
   if(bad.length){msg.textContent="Popunite obavezna polja označena zvezdicom.";bad[0].focus();return}
+  for(const p of TIP[tip].p)if(p.t==="sel"&&val("d_"+p.k)==="Drugo"&&$("#d_"+p.k+"_dr")&&!val("d_"+p.k+"_dr")){msg.textContent=`${p.l}: izabrali ste „Drugo” – upišite šta.`;$("#d_"+p.k+"_dr").classList.add("invalid");$("#d_"+p.k+"_dr").focus();return}
   const S=secOf(tip),fail=(t,el)=>{msg.textContent=t;if(el){el.scrollIntoView({block:"center"});if(el.focus)el.focus()}};
   if(S.has("iv")){const e=ivValidate();if(e)return fail(e[0],e[1])}
   if(S.has("gps")){
@@ -1285,6 +1301,7 @@ function validateNalog(){const msg=$("#fMsg");msg.textContent="";
     if(tip==="dodatna"&&!dxs.length)return fail("Dodajte bar jednu stavku opreme koja se ugrađuje (dugme + Dodaj opremu).",$("#dxAdd"));
     for(let i=0;i<dxs.length;i++){const d=dxs[i],v=d.querySelector(".dx-v"),n=`Oprema ${i+1}: `;v.classList.toggle("invalid",!v.value.trim());
       if(!v.value.trim())return fail(n+"upišite vrstu opreme (ili je uklonite sa ×).",v);
+      {const e=exReqCheck(d);if(e)return fail(n+"izabrali ste „Drugo” – upišite „"+e.closest(".f").querySelector(".l").textContent+"”.",e)}
       if(bezModela(v.value))continue;
       const sg=d.querySelector(".dx-s");if(!sg.querySelector("input:checked")){sg.classList.add("invalid-g");return fail(n+"označite da li je nova ili polovna.",sg)}
       const g=d.querySelector('input[name^="dx_vl_"]');if(g&&!d.querySelector('input[name^="dx_vl_"]:checked')){g.closest(".seg").classList.add("invalid-g");return fail(n+"označite vlasništvo (M ili K).",g)}
@@ -1305,7 +1322,7 @@ function validateNalog(){const msg=$("#fMsg");msg.textContent="";
 async function doSave(){const msg=$("#fMsg");msg.textContent="";
   const btn=$("#fSave");btn.disabled=true;btn.textContent="Čuvanje…";
   try{
-    const det={};TIP[tip].p.forEach(p=>{if(p.t==="chk")det[p.k]=[...document.querySelectorAll(`#d_${p.k} input:checked`)].map(i=>i.value);else det[p.k]=val("d_"+p.k)});
+    const det={};TIP[tip].p.forEach(p=>{if(p.t==="chk")det[p.k]=[...document.querySelectorAll(`#d_${p.k} input:checked`)].map(i=>i.value);else det[p.k]=val("d_"+p.k)==="Drugo"&&val("d_"+p.k+"_dr")?DR+val("d_"+p.k+"_dr"):val("d_"+p.k)});
     const S=secOf(tip),sv=tip==="servis";
     const dodatna=S.has("dx")?dxData().filter(o=>o.vrsta||o.model||o.sn):[];const intervencije=S.has("iv")?ivData().map(ivWithSifre):[];
     const gpsOn=S.has("gps")||(S.has("gpsOpt")&&!!val("u_imei"));
@@ -1369,7 +1386,7 @@ function editNalog(n){
   set("v_reg",n.vozilo?.reg);set("v_model",n.vozilo?.model);set("v_vin",n.vozilo?.vin);set("v_vrsta",n.vozilo?.vrsta);set("v_god",n.vozilo?.god);set("v_km",n.vozilo?.km);set("v_jed",n.vozilo?.jed||"km");
   const u=n.uredjaj||{};set("u_model",u.model||n.detalji?.uredjaj);if(u.stanje==="Nov")$("#u_st_nov").checked=true;if(u.stanje==="Polovan")$("#u_st_pol").checked=true;if(u.vl==="M")$("#u_vl_m").checked=true;if(u.vl==="K")$("#u_vl_k").checked=true;
   set("u_imei",u.imei||n.detalji?.imei);set("u_iccid",u.iccid);set("u_op1",u.op1);set("u_iccid2",u.iccid2);set("u_op2",u.op2);["imei","iccid","iccid2"].forEach(hintCode);
-  TIP[tip].p.forEach(p=>{const v=n.detalji?.[p.k];if(p.t==="chk")(v||[]).forEach(x=>{const i=[...document.querySelectorAll(`#d_${p.k} input`)].find(i=>i.value===x);if(i)i.checked=true});else set("d_"+p.k,v)});
+  TIP[tip].p.forEach(p=>{let v=n.detalji?.[p.k];if(p.t==="sel"&&String(v||"").startsWith(DR)){set("d_"+p.k+"_dr",String(v).slice(DR.length));v="Drugo";const w=$("#d_"+p.k+"_drW");if(w)w.hidden=false}if(p.t==="chk")(v||[]).forEach(x=>{const i=[...document.querySelectorAll(`#d_${p.k} input`)].find(i=>i.value===x);if(i)i.checked=true});else set("d_"+p.k,v)});
   (n.dodatna||[]).forEach(o=>addDx(o));(n.intervencije||[]).forEach(o=>addIv(o));
   if(n.kalibracija)kalSet(n.kalibracija);if(n.kolicine)kolSet(n.kolicine);$("#rezList").innerHTML="";(n.rezervoari||[]).forEach(v=>rezAdd(v));
   set("r_datum",n.rad?.datum);set("r_serviser",n.rad?.serviser);set("napomena",n.napomena);set("potpisnik",n.potpisnik);set("k_email",n.emailKopija);geo=(n.lokacija&&n.lokacija.lat!=null)?n.lokacija:null;renderGeo();set("geo_adr",n.lokacija?.adresa||"");
