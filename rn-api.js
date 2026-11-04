@@ -108,6 +108,8 @@
       me = await loadMe();
       if (!me) me = await loginScreen();
       ls.set("rn_me", JSON.stringify(me));
+      // glavni administrator: prvo ekran „Platforma“ (izbor firme), u aplikaciju tek kad uđe u firmu
+      if (me.isSuper && (!me.firma || ls.get("rn_u_firmi") !== me.firma)) await firmeDialog(true);
       userMenu();
       return me;
     })();
@@ -115,6 +117,7 @@
   }
 
   async function logout() {
+    ls.del("rn_u_firmi");
     await sb.auth.signOut();
     location.reload();
   }
@@ -126,19 +129,19 @@
     const w = document.createElement("div");
     w.className = "um";
     w.innerHTML = '<button type="button" class="um-btn" id="umBtn" aria-haspopup="true" aria-expanded="false"></button>' +
-      '<div class="um-menu" id="umMenu" hidden>' + (me.isSuper ? '<button type="button" id="umFirme">Firme…</button>' : "") +
+      '<div class="um-menu" id="umMenu" hidden>' + (me.isSuper ? '<button type="button" id="umFirme">← Platforma (sve firme)</button>' : "") +
       '<button type="button" id="umTema"></button><button type="button" id="umPass">Promeni lozinku</button><button type="button" id="umOut">Odjavi se</button></div>';
     if (me.isSuper) {
       const fb = document.createElement("button");
-      fb.type = "button"; fb.className = "um-firma"; fb.id = "umFirma"; fb.title = "Promeni firmu";
-      fb.textContent = me.firmaNaziv || "Izaberite firmu";
-      fb.onclick = firmeDialog;
+      fb.type = "button"; fb.className = "um-firma"; fb.id = "umFirma"; fb.title = "Nazad na platformu – izbor firme";
+      fb.innerHTML = '← <span class="um-fl">Platforma · ' + escH(me.firmaNaziv || "") + '</span><span class="um-fs">Firme</span>';
+      fb.onclick = toPlatform;
       row.appendChild(fb);
     }
     row.appendChild(w);
     const btn = w.querySelector("#umBtn"), menu = w.querySelector("#umMenu");
     btn.textContent = me.name || me.username;
-    if (me.isSuper) w.querySelector("#umFirme").onclick = () => { menu.hidden = true; firmeDialog(); };
+    if (me.isSuper) w.querySelector("#umFirme").onclick = () => { menu.hidden = true; toPlatform(); };
     btn.onclick = () => { menu.hidden = !menu.hidden; btn.setAttribute("aria-expanded", String(!menu.hidden)); };
     document.addEventListener("click", (e) => { if (!w.contains(e.target)) menu.hidden = true; });
     w.querySelector("#umOut").onclick = logout;
@@ -158,11 +161,16 @@
 
   // ---------- glavni administrator: firme ----------
   const escH = (v) => String(v == null ? "" : v).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
-  async function firmeDialog() {
+  function toPlatform() { ls.del("rn_u_firmi"); location.reload(); }
+  // page=true: ceo ekran „Platforma“ (posle prijave glavnog administratora); nikad se ne „zatvara“ – Uđi učitava aplikaciju firme
+  function firmeDialog(page) {
+    page = page === true;
     const box = document.createElement("div");
-    box.className = "overlay";
-    box.innerHTML = '<div class="sheet-panel firme-panel" role="dialog" aria-label="Firme"><div class="sec-h"><h2>Firme</h2><small>Vidi ih samo glavni administrator</small></div>' +
-      '<p class="stat" style="margin:0 0 10px">Trenutno radite u firmi <b>' + escH(me.firmaNaziv || "—") + '</b>. Klikom na <b>Uđi</b> prelazite u drugu firmu: vidite njene naloge, klijente, korisnike i podešavanja.</p>' +
+    box.className = page ? "plat-wrap" : "overlay";
+    box.innerHTML = (page ? '<header class="plat-top"><div class="plat-brand"><span class="plat-mark" aria-hidden="true">RN</span><span><b>Radni nalozi</b><small>Platforma · glavni administrator</small></span></div>' +
+      '<div class="plat-act"><span class="plat-who">' + escH(me.name || me.username) + '</span><button type="button" class="btn sm" id="plTema"></button><button type="button" class="btn sm" id="plPass">Lozinka</button><button type="button" class="btn sm" id="plOut">Odjavi se</button></div></header>' : "") +
+      '<div class="sheet-panel firme-panel" role="' + (page ? "main" : "dialog") + '" aria-label="Firme"><div class="sec-h"><h2>Firme</h2><small>' + (page ? "Izaberite firmu u koju ulazite" : "Vidi ih samo glavni administrator") + '</small></div>' +
+      '<p class="stat" style="margin:0 0 10px">' + (page ? 'Klikom na <b>Uđi</b> otvarate aplikaciju te firme: njene naloge, klijente, korisnike i podešavanja. Na platformu se vraćate dugmetom <b>← Platforma</b> gore desno.' : 'Trenutno radite u firmi <b>' + escH(me.firmaNaziv || "—") + '</b>. Klikom na <b>Uđi</b> prelazite u drugu firmu.') + '</p>' +
       '<div class="scroll"><table class="eq"><thead><tr><th>Firma</th><th>Korisnika</th><th>Klijenata</th><th>Naloga</th><th></th></tr></thead><tbody id="fmList"><tr><td colspan="5" class="stat">Učitavam…</td></tr></tbody></table></div>' +
       '<div id="fmBez"></div>' +
       '<form id="fmNova" novalidate style="margin-top:16px"><div class="sec-h"><h2>Nova firma</h2></div><div class="grid">' +
@@ -171,11 +179,25 @@
       '<div class="f"><label class="l" for="fm_ime">Ime i prezime</label><input type="text" id="fm_ime"></div>' +
       '<div class="f"><label class="l" for="fm_user">Korisničko ime</label><input type="text" id="fm_user" autocapitalize="none" placeholder="npr. marko.mt"></div>' +
       '<div class="f"><label class="l" for="fm_pass">Početna lozinka (bar 8 znakova)</label><input type="text" id="fm_pass" autocomplete="off"></div>' +
-      '</div><div class="actions"><div class="msg" role="alert" id="fmMsg"></div><button type="button" class="btn" data-x>Zatvori</button><button type="submit" class="btn pri">Dodaj firmu</button></div></form></div>';
+      '</div><div class="actions"><div class="msg" role="alert" id="fmMsg"></div>' + (page ? "" : '<button type="button" class="btn" data-x>Zatvori</button>') + '<button type="submit" class="btn pri">Dodaj firmu</button></div></form></div>';
     document.body.appendChild(box);
-    const close = () => box.remove();
-    box.querySelector("[data-x]").onclick = close;
-    box.addEventListener("click", (e) => { if (e.target === box) close(); });
+    if (page) {
+      document.body.classList.add("plat-on");
+      box.querySelector("#plOut").onclick = logout;
+      box.querySelector("#plPass").onclick = passwordDialog;
+      const TEME = [["", "Tema: auto"], ["light", "Tema: svetla"], ["dark", "Tema: tamna"]], tb = box.querySelector("#plTema");
+      const show = () => { const t = ls.get("rn_tema") || ""; tb.textContent = (TEME.find((x) => x[0] === t) || TEME[0])[1]; };
+      tb.onclick = () => {
+        const t = ls.get("rn_tema") || "", n = TEME[(TEME.findIndex((x) => x[0] === t) + 1) % TEME.length][0];
+        if (n) { ls.set("rn_tema", n); document.documentElement.setAttribute("data-theme", n); } else { ls.del("rn_tema"); document.documentElement.removeAttribute("data-theme"); }
+        show();
+      };
+      show();
+    } else {
+      const close = () => box.remove();
+      box.querySelector("[data-x]").onclick = close;
+      box.addEventListener("click", (e) => { if (e.target === box) close(); });
+    }
     const msg = box.querySelector("#fmMsg");
     const say = (t, ok) => { msg.style.color = ok ? "var(--ok)" : ""; msg.textContent = t; };
     let firme = [];
@@ -183,13 +205,16 @@
       try { firme = chk(await sb.rpc("rn_firme_pregled")); }
       catch (e) { box.querySelector("#fmList").innerHTML = '<tr><td colspan="5" class="stat">' + escH(e.message) + '</td></tr>'; return; }
       box.querySelector("#fmList").innerHTML = firme.map((f) =>
-        '<tr' + (f.aktivna ? "" : ' style="opacity:.55"') + '><td><b>' + escH(f.naziv) + '</b>' + (f.id === me.firma ? ' <span class="stat">· trenutna</span>' : "") + (f.aktivna ? "" : ' <span class="stat">· isključena</span>') + '</td>' +
+        '<tr' + (f.aktivna ? "" : ' style="opacity:.55"') + '><td><b>' + escH(f.naziv) + '</b>' + (f.id === me.firma && !page ? ' <span class="stat">· trenutna</span>' : "") + (page ? '<div class="stat plat-cnt">' + f.korisnika + ' kor. · ' + f.klijenata + ' klij. · ' + f.naloga + ' nal.</div>' : "") + (f.aktivna ? "" : ' <span class="stat">· isključena</span>') + '</td>' +
         '<td>' + f.korisnika + '</td><td>' + f.klijenata + '</td><td>' + f.naloga + '</td><td style="white-space:nowrap">' +
-        (f.id === me.firma ? "" : '<button type="button" class="btn sm" data-udji="' + escH(f.id) + '">Uđi</button> ') +
+        (f.id === me.firma && !page ? "" : '<button type="button" class="btn sm' + (page ? " pri" : "") + '" data-udji="' + escH(f.id) + '"' + (f.aktivna ? "" : " disabled") + '>Uđi</button> ') +
         '<button type="button" class="btn sm" data-akt="' + escH(f.id) + '" data-v="' + (f.aktivna ? "0" : "1") + '">' + (f.aktivna ? "Isključi" : "Uključi") + '</button></td></tr>').join("");
       box.querySelectorAll("[data-udji]").forEach((b) => b.onclick = async () => {
         b.disabled = true;
-        try { chk(await sb.rpc("rn_udji_u_firmu", { p_firma: b.dataset.udji })); ls.del("rn_me"); location.reload(); }
+        try {
+          if (b.dataset.udji !== me.firma) chk(await sb.rpc("rn_udji_u_firmu", { p_firma: b.dataset.udji }));
+          ls.set("rn_u_firmi", b.dataset.udji); ls.del("rn_me"); location.reload();
+        }
         catch (e) { b.disabled = false; say(errMsg(e)); }
       });
       box.querySelectorAll("[data-akt]").forEach((b) => b.onclick = async () => {
@@ -230,6 +255,7 @@
       finally { b.disabled = false; }
     });
     load();
+    if (page) return new Promise(() => {});   // aplikacija ostaje sakrivena dok se ne uđe u firmu
   }
 
   function passwordDialog() {

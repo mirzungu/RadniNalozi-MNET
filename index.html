@@ -226,7 +226,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .login{background:var(--surface);color:var(--ink);border-radius:10px;padding:24px;width:100%;max-width:380px;display:flex;flex-direction:column;gap:12px}
 .login h1{margin:0}.login .lead{margin:-8px 0 4px}.login .btn{justify-content:center;padding:12px}
 .login-col{width:100%;max-width:380px;display:flex;flex-direction:column;align-items:center;gap:22px}.login-col .login{max-width:none}.login .msg{flex:0 0 auto}.login .msg:empty{display:none}.login .f{flex:0 0 auto}.login-logo img{height:38px;max-width:100%;width:auto;display:block}
-.um{position:relative;flex:none}.um-firma{appearance:none;border:1px solid var(--accent,#e30613);background:transparent;color:var(--bar-ink);border-radius:999px;padding:6px 12px;font:inherit;font-size:13px;font-weight:600;cursor:pointer;max-width:34vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:none}.um-firma::before{content:"▣ ";opacity:.7}.logo-txt{font-family:var(--f-display);font-weight:800;font-size:20px;color:var(--bar-ink);letter-spacing:.02em}.firme-panel{max-width:760px}
+.um{position:relative;flex:none}.um-firma{appearance:none;border:1px solid var(--accent,#e30613);background:transparent;color:var(--bar-ink);border-radius:999px;padding:6px 12px;font:inherit;font-size:13px;font-weight:600;cursor:pointer;max-width:34vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:none}.logo-txt{font-family:var(--f-display);font-weight:800;font-size:20px;color:var(--bar-ink);letter-spacing:.02em}.firme-panel{max-width:760px}
 .um-btn{appearance:none;border:1px solid var(--bar-muted);background:transparent;color:var(--bar-ink);border-radius:999px;padding:6px 12px;font:inherit;font-size:13px;cursor:pointer;max-width:42vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .um-menu{position:absolute;right:0;top:calc(100% + 6px);background:var(--surface);border:1px solid var(--line);border-radius:6px;box-shadow:0 8px 24px rgba(0,0,0,.2);display:flex;flex-direction:column;min-width:180px;z-index:20}
 .um-menu button{appearance:none;border:0;background:none;text-align:left;padding:10px 14px;font:inherit;color:var(--ink);cursor:pointer}
@@ -242,6 +242,18 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .overlay{position:fixed;inset:0;z-index:30;background:rgba(8,14,18,.55);display:flex;align-items:flex-end;justify-content:center;padding:0 max(0px,env(safe-area-inset-right,0px)) 0 max(0px,env(safe-area-inset-left,0px))}
 .sheet-panel{background:var(--surface);width:100%;max-width:560px;border-radius:14px 14px 0 0;padding:16px 16px calc(18px + env(safe-area-inset-bottom,0px));max-height:90%;overflow-y:auto}
 @media (min-width:640px){.overlay{align-items:center}.sheet-panel{border-radius:10px}}
+/* platforma – glavni administrator (bez loga firme) */
+.plat-wrap{position:fixed;inset:0;z-index:45;background:var(--bg);overflow:auto;padding-bottom:env(safe-area-inset-bottom,0px)}
+.plat-on{overflow:hidden}.plat-on .overlay{z-index:60}
+.plat-top{position:sticky;top:0;z-index:2;background:#1d2733;color:#fff;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:calc(12px + env(safe-area-inset-top,0px)) 16px 12px}
+.plat-brand{display:flex;align-items:center;gap:10px}.plat-brand b{display:block;font-size:17px;letter-spacing:.02em}.plat-brand small{display:block;opacity:.7;font-size:12px}
+.plat-mark{width:36px;height:36px;border-radius:8px;background:linear-gradient(135deg,#3b82f6,#14b8a6);display:grid;place-items:center;font-weight:800;font-size:14px;letter-spacing:.04em}
+.plat-act{display:flex;align-items:center;gap:6px;flex-wrap:wrap}.plat-who{opacity:.8;font-size:13px;margin-right:4px}
+.plat-top .btn{background:transparent;color:#fff;border-color:rgba(255,255,255,.35)}
+.plat-wrap .firme-panel{max-width:860px;margin:20px auto;border-radius:10px;max-height:none}
+.plat-cnt{display:none}.um-fs{display:none}
+@media (max-width:639px){.um-fl{display:none}.um-fs{display:inline}.um-firma{padding:6px 10px}.plat-on .logo,body:has(#umFirma) .logo{max-width:calc(100vw - 210px)}}
+@media (max-width:639px){.plat-wrap .firme-panel{margin:0;border-radius:0}.plat-cnt{display:block}.plat-wrap .eq th:nth-child(n+2):nth-child(-n+4),.plat-wrap .eq td:nth-child(n+2):nth-child(-n+4){display:none}}
 .sheet-panel .types{grid-template-columns:1fr;margin:0}
 .sheet-panel .type{padding:14px 14px 14px 20px}
 .sheet-panel .type b{font-size:20px}
