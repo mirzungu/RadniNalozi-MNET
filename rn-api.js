@@ -67,13 +67,15 @@
       const box = document.createElement("div");
       box.className = "login-wrap";
       box.innerHTML =
-        '<form class="login" novalidate><div class="login-logo"></div>' +
+        '<div class="login-col"><div class="login-logo"></div><form class="login" novalidate>' +
         '<h1>Prijava</h1><p class="lead">Radni nalozi servisa na terenu</p>' +
         '<div class="f"><label class="l" for="lg_u">Korisničko ime ili e-pošta</label><input type="text" id="lg_u" autocomplete="username" autocapitalize="none"></div>' +
         '<div class="f"><label class="l" for="lg_p">Lozinka</label><input type="password" id="lg_p" autocomplete="current-password"></div>' +
-        '<div class="msg" role="alert"></div><button type="submit" class="btn pri">Prijavi se</button></form>';
+        '<div class="msg" role="alert"></div><button type="submit" class="btn pri">Prijavi se</button></form></div>';
       document.body.appendChild(box);
-      if (window.RN_LOGO_D) box.querySelector(".login-logo").innerHTML = '<img src="' + window.RN_LOGO_D + '" alt="MonitoringNET">';
+      // svetao logo na tamnoj pozadini – vidi se i u svetloj i u tamnoj temi telefona
+      const lg = window.RN_LOGO_W || window.RN_LOGO_D;
+      if (lg) box.querySelector(".login-logo").innerHTML = '<img src="' + lg + '" alt="MonitoringNET">';
       const m = box.querySelector(".msg");
       m.textContent = msg;
       box.querySelector("#lg_u").value = ls.get("rn_last_user") || "";
