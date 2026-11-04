@@ -88,6 +88,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .eq td{padding:0 6px 6px 0;vertical-align:top}
 .eq td:last-child{width:36px;padding-right:0}
 .eq input{padding:7px 8px}
+.kol-t{min-width:460px}.kol-t th:first-child{width:auto}.kol-t .kol-o{min-width:200px}.kol-t .kol-n{width:80px}
 .big-new{width:100%;justify-content:center;font-size:20px;padding:18px;margin:4px 0 18px;border-radius:8px}.big-new span{font-size:26px;line-height:1}
 .ord{list-style:none;margin:0;padding:0;display:grid;gap:6px;max-width:520px}.ord li{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:5px;padding:6px 8px;background:var(--bg)}.ord li .nm{flex:1;font-weight:600}.ord li .no{width:22px;color:var(--muted);font-variant-numeric:tabular-nums}.ord li .xbtn:disabled{opacity:.3;cursor:default}
 .xbtn{appearance:none;border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:5px;width:34px;height:36px;cursor:pointer;font-size:18px;line-height:1}
@@ -374,11 +375,11 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
       <div class="sec-h"><h2 id="kolT">Oprema</h2><small id="kolCount"></small></div>
       <div class="grid">
         <div class="f" id="kol_predW"><label class="l req" for="kol_pred">Opremu predao</label><input type="text" id="kol_pred" list="servList" autocomplete="off"></div>
-        <div class="f" id="kol_primW"><label class="l req" for="kol_prim">Opremu preuzeo</label><input type="text" id="kol_prim" list="servList" autocomplete="off"></div>
+        <div class="f" id="kol_primW"><label class="l req" for="kol_prim">Opremu preuzeo</label><select id="kol_prim"><option value="">— izaberite servisera —</option></select></div>
         <div class="f" id="kol_servW"><label class="l req" for="kol_serv">Serviser čija se oprema popisuje</label><input type="text" id="kol_serv" list="servList" autocomplete="off"></div>
       </div>
       <datalist id="servList"></datalist><datalist id="kolOpList"></datalist>
-      <div class="scroll" style="margin-top:10px"><table class="eq kol-t"><thead><tr><th>Oprema (šifra – naziv)</th><th style="width:90px">Količina</th><th style="width:160px">S/N (ako treba)</th><th></th></tr></thead><tbody id="kolRows"></tbody></table></div>
+      <div class="scroll" style="margin-top:10px"><table class="eq kol-t"><thead><tr><th>Oprema (šifra – naziv)</th><th style="width:90px">Kol.</th><th style="width:140px">S/N</th><th></th></tr></thead><tbody id="kolRows"></tbody></table></div>
       <button type="button" class="btn dx-add" id="kolAdd"><span aria-hidden="true">+</span> Dodaj stavku</button>
     </div>
 
@@ -831,8 +832,13 @@ function kalSet(k){k=k||{};$("#kal_op").value=k.oprema||"";$("#kal_model").value
 
 /* ---------- prenos / popis opreme (količine) ---------- */
 let servNames=[];
-async function servLoad(){if(servNames.length)return;try{const L=await RN.users.list();servNames=L.filter(u=>u.active!==false).map(u=>u.name||u.username).filter(Boolean).sort((a,b)=>a.localeCompare(b,"sr"))}catch(e){servNames=[]}
-  $("#servList").innerHTML=optHtml(servNames)}
+async function servLoad(){if(!servNames.length){try{const L=await RN.users.list();servNames=L.filter(u=>u.active!==false).map(u=>u.name||u.username).filter(Boolean).sort((a,b)=>a.localeCompare(b,"sr"))}catch(e){servNames=[]}}
+  $("#servList").innerHTML=optHtml(servNames);primOpts()}
+// padajući meni „Opremu preuzeo": svi serviseri firme osim onoga ko predaje
+function primOpts(keep){const sel=$("#kol_prim"),cur=keep??sel.value,pred=val("kol_pred").toLowerCase();
+  const L=servNames.filter(n=>n.toLowerCase()!==pred);if(cur&&!L.includes(cur))L.push(cur);
+  sel.innerHTML=`<option value="">${servNames.length?"— izaberite servisera —":"— spisak servisera nije dostupan —"}</option>`+L.map(n=>`<option${n===cur?" selected":""}>${esc(n)}</option>`).join("")}
+$("#kol_pred").addEventListener("change",()=>primOpts());
 const kolLabel=o=>[o.sifra,o.model].filter(Boolean).join(" – ");
 function kolOpts(){const L=[];katalog().forEach(o=>{if(!o.model)return;if(o.sifra)L.push(o.sifra+" – "+o.model);if(o.sifraP)L.push(o.sifraP+" – "+o.model);if(!o.sifra&&!o.sifraP)L.push(o.model)});$("#kolOpList").innerHTML=optHtml(uniq(L))}
 function kolNum(){const n=[...$("#kolRows").children].reduce((a,r)=>a+(+r.querySelector(".kol-n").value||0),0);$("#kolCount").textContent=n?`ukupno ${n} kom`:""}
@@ -842,7 +848,7 @@ function kolAdd(v={},focus){const tr=document.createElement("tr");
 $("#kolAdd").onclick=()=>{kolAdd({},true);dSave()};
 const kolData=()=>({predao:val("kol_pred"),preuzeo:val("kol_prim"),serviser:val("kol_serv"),
   stavke:[...$("#kolRows").children].map(r=>{const t=r.querySelector(".kol-o").value.trim(),m=t.match(/^(\d{3,4}(?:-P)?)\s*[–-]\s*(.+)$/);return{oprema:t,sifra:m?m[1]:"",model:m?m[2]:t,kol:r.querySelector(".kol-n").value.trim(),sn:r.querySelector(".kol-s").value.trim()}}).filter(o=>o.oprema||o.kol)});
-function kolSet(k){k=k||{};$("#kol_pred").value=k.predao||"";$("#kol_prim").value=k.preuzeo||"";$("#kol_serv").value=k.serviser||"";$("#kolRows").innerHTML="";(k.stavke||[]).forEach(o=>kolAdd(o));kolNum()}
+function kolSet(k){k=k||{};$("#kol_pred").value=k.predao||"";primOpts(k.preuzeo||"");$("#kol_serv").value=k.serviser||"";$("#kolRows").innerHTML="";(k.stavke||[]).forEach(o=>kolAdd(o));kolNum()}
 $("#kol_prim").addEventListener("change",()=>{if(TIP[tip].kol==="prenos")$("#potpisnik").value=val("kol_prim")});
 
 /* ---------- rezervoari (Seoba – NIS) ---------- */
@@ -1167,7 +1173,7 @@ let editId=null,editOrig=null,editSig=null;
 // ime servisera iz prijave; serviser ga ne menja (administrator može, npr. kad unosi nalog umesto nekog)
 function fillServiser(){const m=window.RN&&RN.me&&RN.me();if(!m||!m.name)return;
   if(!editId&&(!isAdmin()||!val("r_serviser")))$("#r_serviser").value=m.name;$("#r_serviser").readOnly=!isAdmin();
-  if(!editId&&!val("kol_pred"))$("#kol_pred").value=m.name}
+  if(!editId&&!val("kol_pred"))$("#kol_pred").value=m.name;$("#kol_pred").readOnly=!isAdmin();if(typeof primOpts==="function")primOpts()}
 function resetForm(t){
   geo=null;if(typeof renderGeo==="function")renderGeo();
   editId=null;editOrig=null;editSig=null;$("#sigOld").hidden=true;$("#timerSec").hidden=false;$("#editTimes").hidden=true;$("#fReset").textContent="Odbaci nalog";
