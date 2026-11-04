@@ -266,6 +266,16 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .tip-banner{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--line);border-left:6px solid var(--c);border-radius:6px;padding:12px 14px;margin-bottom:12px}
 .tip-banner .tb-l{font-size:12px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
 .tip-banner .tb-n{font-family:var(--f-display);font-weight:700;font-size:24px;line-height:1.1}
+.utoku{border:1px solid var(--line);border-radius:6px;background:var(--surface);margin-bottom:12px;overflow:hidden}
+.ut-h{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:9px 12px;border-bottom:1px solid var(--line)}
+.ut-dot{width:9px;height:9px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 3px color-mix(in srgb,var(--ok) 25%,transparent);animation:utp 1.6s ease-in-out infinite}
+@keyframes utp{50%{opacity:.35}}
+.ut-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border-left:5px solid var(--c);border-top:1px solid var(--line)}
+.ut-row:first-of-type{border-top:0}.ut-row .mid{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.ut-row .mid b{overflow-wrap:anywhere}.ut-row .mid span{font-size:13px;color:var(--muted)}
+.ut-st{font-size:12px;font-weight:700;padding:3px 8px;border-radius:999px;white-space:nowrap;color:var(--muted);border:1px solid var(--line)}
+.ut-st.run{color:var(--ok);border-color:var(--ok)}.ut-st.pz{color:var(--warn);border-color:var(--warn)}
+@media (prefers-reduced-motion:reduce){.ut-dot{animation:none}}
 .draft{display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:color-mix(in srgb,var(--vis) 18%,var(--surface));border:1px solid var(--vis);border-radius:6px;padding:10px 12px;margin-bottom:12px}
 .krow{display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:var(--surface);border:1px solid var(--line);border-radius:5px;padding:10px 14px}
 .krow .mid{flex:1 1 200px;min-width:0}
@@ -685,8 +695,8 @@ const VID=[["klLogo","Logo klijenta",1],["gpsModel","Model GPS uređaja",1],["im
  ["lokacija","Lokacija rada (koordinate)",1],["serviser","Ime servisera",1],["vreme","Radno vreme i trajanje",1],["pauze","Pauze",0],["napomena","Napomena",1],["foto","Fotografije",1]];
 const vidOn=k=>{const v=(firma.vidljivo||{})[k];return v===undefined?!!(VID.find(x=>x[0]===k)||[])[2]:!!v};
 let dView="interni";
-const MODS=["Kupovina","Renta","Kupovina i renta"];
-const MOD_C={"Kupovina":"--mod-p","Renta":"--mod-r","Kupovina i renta":"--mod-rk"};
+const MODS=["Kupovina","Renta","Renta (sonda kupovina)","Kupovina i renta"];
+const MOD_C={"Kupovina":"--mod-p","Renta":"--mod-r","Renta (sonda kupovina)":"--mod-r","Kupovina i renta":"--mod-rk"};
 const modTag=m=>m?`<span class="tag" style="--c:var(${MOD_C[m]||"--muted"});vertical-align:2px">${esc(m)}</span>`:"";
 const klMod=n=>((klijenti.find(k=>k.id===n.klijentId)||{}).mod)||n.klijent?.mod||"";
 const PROV={ok:["Obrađen","--ok","✓"],obrada:["U obradi","--warn","…"],dopuna:["Potrebna dopuna","--danger","!"]};
@@ -741,7 +751,7 @@ function route(keep){
   if(v==="uloge")renderUloge();
   if(v==="detalj"){const nid=h.slice(2);if(nid!==curId)dView="interni";curId=nid;renderDetail()}
   if(v==="podesavanja")fillSettings();
-  if(v==="arhiva")renderDraftNote();
+  if(v==="arhiva"){renderDraftNote();utLoad()}
   if(v==="novi"){renderBanner();if(!sigInk&&!keep)setTimeout(sigSize,0)}
   if(!keep)window.scrollTo(0,0);
 }
@@ -757,6 +767,21 @@ function openChooser(mode){
   $("#chooser").hidden=false;setTimeout(()=>$("#types .type")?.focus(),0);
 }
 function closeChooser(){$("#chooser").hidden=true}
+
+/* ---------- nalozi u toku: pokrenut tajmer, još nesačuvan – vide ih administrator i serviser na drugim uređajima ---------- */
+let utRows=[],utT=null,utLast="";
+function utOn(){return !!(window.RN&&RN.sb)}
+function utSync(){if(!utOn()||editId||!formOpen||!timer.start)return;if(!timer.nid)timer.nid="rn"+timer.start.toString(36);
+  const d={tip,klijent:val("k_naziv"),reg:val("v_reg").toUpperCase(),serviser:val("r_serviser"),start:timer.start,stop:timer.stop||null,pausedAt:timer.pausedAt||null,pauzeMs:(timer.pauze||[]).reduce((a,p)=>a+(p.do-p.od),0)};
+  const k=JSON.stringify(d);if(k===utLast)return;const id=timer.nid;
+  clearTimeout(utT);utT=setTimeout(async()=>{try{const r=await RN.sb.from("u_toku").upsert({id,data:d});if(!r.error)utLast=k}catch(e){}},1200)}
+async function utDel(id){clearTimeout(utT);utLast="";utRows=utRows.filter(r=>r.id!==id);if(!utOn()||!id)return;try{await RN.sb.from("u_toku").delete().eq("id",id)}catch(e){}}
+async function utLoad(){if(!utOn())return;try{const r=await RN.sb.from("u_toku").select("id,user_id,data,updated_at").order("updated_at",{ascending:false});if(!r.error){utRows=r.data||[];if(!$("#v-arhiva").hidden)renderDraftNote()}}catch(e){}}
+setInterval(()=>{if(!document.hidden&&!$("#v-arhiva").hidden)utLoad()},60000);
+document.addEventListener("visibilitychange",()=>{if(!document.hidden&&!$("#v-arhiva").hidden)utLoad()});
+$("#draftNote").addEventListener("click",async e=>{const b=e.target.closest("[data-utdel]");if(!b)return;
+  if(!confirm("Ukloniti ovaj nalog iz liste „u toku”? Serviseru se nalog ne briše sa telefona – samo prestaje da se prikazuje ovde."))return;
+  await utDel(b.dataset.utdel);renderDraftNote()});
 $("#fab").onclick=()=>openChooser("new");
 $("#chClose").onclick=closeChooser;
 $("#chooser").addEventListener("click",e=>{if(e.target.id==="chooser")closeChooser()});
@@ -765,7 +790,15 @@ function renderBanner(){const t=TIP[tip];const b=$("#tipBanner");b.style.setProp
   b.innerHTML=`<div><div class="tb-l">${editId?`Izmena naloga ${esc(editOrig.broj)} · vrsta posla`:"Vrsta posla"}</div><div class="tb-n">${t.n}</div></div><button type="button" class="btn sm" id="tbChg">Promeni vrstu</button>`;
   $("#tbChg").onclick=()=>openChooser("change")}
 function renderDraftNote(){
-  $("#draftNote").innerHTML=(formOpen&&dirty())?`<div class="draft"><span style="flex:1 1 200px">Započet nalog: <b>${TIP[tip].n}</b>${val("k_naziv")?" · "+esc(val("k_naziv")):""}</span><a class="btn sm pri" href="#novi">Nastavi</a></div>`:"";
+  const mine=formOpen&&dirty(),now=Date.now();
+  const rows=utRows.filter(r=>!(mine&&r.id===timer.nid)&&r.data&&r.data.start);
+  const dur=d=>{const end=d.stop||now;return Math.max(0,Math.round((end-d.start-(d.pauzeMs||0)-(d.pausedAt&&!d.stop?end-d.pausedAt:0))/60000))};
+  const st=d=>d.stop?"zatvoren, čeka čuvanje":d.pausedAt?"pauza od "+fmtT(d.pausedAt):"radi";
+  const myRun=mine&&timer.start?` <span class="ut-st${timer.pausedAt?" pz":timer.stop?"":" run"}">${timer.stop?"zatvoren":timer.pausedAt?"pauza":"u toku"} · ${fmtDur(Math.round(radMs()/60000))}</span>`:"";
+  $("#draftNote").innerHTML=(mine?`<div class="draft"><span style="flex:1 1 200px">Započet nalog: <b>${TIP[tip].n}</b>${val("k_naziv")?" · "+esc(val("k_naziv")):""}${myRun}</span><a class="btn sm pri" href="#novi">Nastavi</a></div>`:"")+
+   (rows.length?`<div class="utoku"><div class="ut-h"><span class="ut-dot"></span>Nalozi u toku · ${rows.length}</div>${rows.map(r=>{const d=r.data,t=TIP[d.tip]||TIP.ostalo,ja=r.user_id===myId;
+     return `<div class="ut-row" style="--c:var(${t.c})"><div class="mid"><b>${esc(t.n)}${d.klijent?" · "+esc(d.klijent):""}${d.reg?" · "+esc(d.reg):""}</b><span>${esc(ja?"Vi":d.serviser||"—")} · od ${fmtT(d.start)}${ymd(new Date(d.start))!==ymd(new Date())?" ("+fmtD(ymd(new Date(d.start)))+")":""} · rad ${fmtDur(dur(d))}${ja?" · započet na drugom uređaju":""}</span></div>`+
+       `<span class="ut-st${d.stop?"":d.pausedAt?" pz":" run"}">${st(d)}</span>${isAdmin()?`<button type="button" class="xbtn" data-utdel="${esc(r.id)}" title="Ukloni iz liste (npr. zaboravljen nalog)" aria-label="Ukloni">×</button>`:""}</div>`}).join("")}</div>`:"");
 }
 
 /* ---------- header ---------- */
@@ -815,7 +848,10 @@ function addDx(v={},focus){
   const exDraw=()=>{const vr=d.querySelector(".dx-v").value;const k=kKey(vr)+"|"+bezModela(vr)+"|"+napOn(vr);if(k===exKey)return;
     if(exKey!==null)exVals={...exVals,...exRead(d.querySelector(".dx-ex"))};exKey=k;
     d.querySelector(".dx-ex").innerHTML=exHtml(vr,"u",exVals,"",true);
-    const bm=bezModela(vr);["dx-stW","dx-vlW","dx-snW","dx-mW"].forEach(c=>d.querySelector("."+c).hidden=bm)};
+    const bm=bezModela(vr);["dx-stW","dx-vlW","dx-snW","dx-mW"].forEach(c=>d.querySelector("."+c).hidden=bm);
+    // vlasništvo po klijentu i vrsti (npr. renta sa kupljenom sondom: sonda K), dok ga serviser sam ne promeni
+    if(!d._vlRuka&&!v.vl){const dv=vlDef(vr),r=dv&&d.querySelector('input[name^="dx_vl_"][value="'+dv+'"]');if(r)r.checked=true}};
+  d.addEventListener("change",e=>{if(e.target.name&&e.target.name.startsWith("dx_vl_")&&e.isTrusted)d._vlRuka=true});
   d._exDraw=exDraw;d.querySelector(".xbtn").onclick=()=>{d.remove();dxNum();dSave()};$("#dxList").appendChild(d);dxNum();
   const dv=d.querySelector(".dx-v");dv.addEventListener("input",()=>{dxModels(d);exDraw()});dv.addEventListener("change",()=>{dxModels(d);exDraw()});dxModels(d);exDraw();
   if(focus){d.scrollIntoView({behavior:"smooth",block:"center"});setTimeout(()=>d.querySelector(".dx-v").focus(),250)}
@@ -950,7 +986,7 @@ const exTxt=ex=>Object.entries(ex||{}).map(([k,v])=>k+": "+v).join(", ");
 /* ---------- intervencije (servis) ---------- */
 // Vlasništvo opreme: M = kompanije (skinuto se vraća u magacin polovne robe), K = klijentova (ostaje klijentu)
 const VL={M:"M – naša",K:"K – klijent"};
-function vlDef(){const k=klijenti.find(x=>x.id===$("#k_sel").value);const m=k&&k.mod;return m==="Kupovina"?"K":m==="Renta"?"M":""}
+function vlDef(vr){const k=klijenti.find(x=>x.id===$("#k_sel").value);const m=k&&k.mod;return m==="Kupovina"?"K":m==="Renta"?"M":m==="Renta (sonda kupovina)"?(/sonda/i.test(vr||"")?"K":"M"):""}
 const vlSeg=(name,val)=>`<div class="seg" role="radiogroup">${Object.entries(VL).map(([k,l])=>`<label class="chk"><input type="radio" name="${name}" value="${k}"${val===k?" checked":""}>${l}</label>`).join("")}</div>`;
 const RADNJE=[["zamena","Zamena","neispravna oprema se menja drugom"],["servis","Servis","uspešna popravka, bez zamene"],["instalacija","Instalacija","kabl, napajanje, baterija"],["rekonf","Rekonfiguracija","podešavanje, parametri"],["demontaza","Demontaža","skidanje bez zamene"],["ugradnja","Dodatna ugradnja","nova oprema uz postojeću"]];
 const RADNJA={...Object.fromEntries(RADNJE.map(r=>[r[0],r[1]])),premestanje:"Premeštanje",seoba:"Seoba"};
@@ -979,18 +1015,18 @@ function ivFieldsHtml(i,op,ra,v){
     const lab={rekonf:"Šta je podešeno",zamena:"Šta je zamenjeno i zašto",servis:"Šta je popravljeno",instalacija:"Šta je urađeno",demontaza:"Napomena",ugradnja:"Napomena",premestanje:"Napomena",seoba:"Napomena"}[ra]||"Napomena";
     h+=exHtml(op,ctx,ex)+F(lab,`<textarea class="iv-opis"${req?" data-ivreq":""}>${esc(v.opis||"")}</textarea>`,req,1);
   }else if(ra==="premestanje"||ra==="seoba"){
-    h+=F("Model",model("iv-sk-model",sk.model))+F(idL,scan("iv-sk-id",kind,sk.id,0,g?"15 cifara":""))+F("Vlasništvo",vlSeg("ivskv_"+i,sk.vl||vlDef()),1)+F("Napomena",`<textarea class="iv-opis">${esc(v.opis||"")}</textarea>`,0,1);
+    h+=F("Model",model("iv-sk-model",sk.model))+F(idL,scan("iv-sk-id",kind,sk.id,0,g?"15 cifara":""))+F("Vlasništvo",vlSeg("ivskv_"+i,sk.vl||vlDef(op)),1)+F("Napomena",`<textarea class="iv-opis">${esc(v.opis||"")}</textarea>`,0,1);
   }else if(ra==="zamena"){
-    h+=`<div class="f full iv-sub">Skinuto (demontirano)</div>`+F("Model skinutog",model("iv-sk-model",sk.model))+F(idL+" skinutog",scan("iv-sk-id",kind,sk.id,0,g?"15 cifara":""))+F("Stanje skinutog",seg("ivsks",["Neispravan","Ispravan"],sk.stanje),1)+F("Vlasništvo skinutog",vlSeg("ivskv_"+i,sk.vl||vlDef()),1)+(g?F("ICCID SIM kartice u skinutom",scan("iv-sk-iccid","iccid",sk.iccid,0,"89…")):"");
-    h+=`<div class="f full iv-sub">Ugrađeno (novo)</div>`+F("Model ugrađenog",model("iv-nv-model",nv.model))+F(idL+" ugrađenog",scan("iv-nv-id",kind,nv.id,1,g?"15 cifara":""),1)+F("Stanje ugrađenog",seg("ivnvs",["Nov","Polovan"],nv.stanje),1)+F("Vlasništvo ugrađenog",vlSeg("ivnvv_"+i,nv.vl||vlDef()),1)+(g?`<div class="f full"><small class="stat">SIM kartica u vozilu posle zamene: upišite ICCID i kada je kartica ista kao pre.</small></div>`+gpsSim("iv-nv",nv,1):"");
+    h+=`<div class="f full iv-sub">Skinuto (demontirano)</div>`+F("Model skinutog",model("iv-sk-model",sk.model))+F(idL+" skinutog",scan("iv-sk-id",kind,sk.id,0,g?"15 cifara":""))+F("Stanje skinutog",seg("ivsks",["Neispravan","Ispravan"],sk.stanje),1)+F("Vlasništvo skinutog",vlSeg("ivskv_"+i,sk.vl||vlDef(op)),1)+(g?F("ICCID SIM kartice u skinutom",scan("iv-sk-iccid","iccid",sk.iccid,0,"89…")):"");
+    h+=`<div class="f full iv-sub">Ugrađeno (novo)</div>`+F("Model ugrađenog",model("iv-nv-model",nv.model))+F(idL+" ugrađenog",scan("iv-nv-id",kind,nv.id,1,g?"15 cifara":""),1)+F("Stanje ugrađenog",seg("ivnvs",["Nov","Polovan"],nv.stanje),1)+F("Vlasništvo ugrađenog",vlSeg("ivnvv_"+i,nv.vl||vlDef(op)),1)+(g?`<div class="f full"><small class="stat">SIM kartica u vozilu posle zamene: upišite ICCID i kada je kartica ista kao pre.</small></div>`+gpsSim("iv-nv",nv,1):"");
     h+=exHtml(op,"d",ex,"Skinuto")+exHtml(op,"u",ex,"Ugrađeno");
     h+=F("Razlog zamene",`<textarea class="iv-opis" data-ivreq>${esc(v.opis||"")}</textarea>`,1,1);
   }else if(ra==="ugradnja"){
     h+=exHtml(op,"u",ex);
-    h+=F("Model",model("iv-nv-model",nv.model))+F(idL,scan("iv-nv-id",kind,nv.id,1,g?"15 cifara":""),1)+F("Stanje",seg("ivnvs",["Nov","Polovan"],nv.stanje),1)+F("Vlasništvo",vlSeg("ivnvv_"+i,nv.vl||vlDef()),1)+(g?gpsSim("iv-nv",nv,1):"")+F("Napomena",`<textarea class="iv-opis">${esc(v.opis||"")}</textarea>`,0,1);
+    h+=F("Model",model("iv-nv-model",nv.model))+F(idL,scan("iv-nv-id",kind,nv.id,1,g?"15 cifara":""),1)+F("Stanje",seg("ivnvs",["Nov","Polovan"],nv.stanje),1)+F("Vlasništvo",vlSeg("ivnvv_"+i,nv.vl||vlDef(op)),1)+(g?gpsSim("iv-nv",nv,1):"")+F("Napomena",`<textarea class="iv-opis">${esc(v.opis||"")}</textarea>`,0,1);
   }else if(ra==="demontaza"){
     h+=exHtml(op,"d",ex);
-    h+=F("Model",model("iv-sk-model",sk.model))+F(idL,scan("iv-sk-id",kind,sk.id,0,g?"15 cifara":""))+F("Stanje skinutog",seg("ivsks",["Neispravan","Ispravan"],sk.stanje),1)+F("Vlasništvo",vlSeg("ivskv_"+i,sk.vl||vlDef()),1)+F("Razlog demontaže",`<textarea class="iv-opis" data-ivreq>${esc(v.opis||"")}</textarea>`,1,1);
+    h+=F("Model",model("iv-sk-model",sk.model))+F(idL,scan("iv-sk-id",kind,sk.id,0,g?"15 cifara":""))+F("Stanje skinutog",seg("ivsks",["Neispravan","Ispravan"],sk.stanje),1)+F("Vlasništvo",vlSeg("ivskv_"+i,sk.vl||vlDef(op)),1)+F("Razlog demontaže",`<textarea class="iv-opis" data-ivreq>${esc(v.opis||"")}</textarea>`,1,1);
   }else{
     const lab={servis:"Šta je popravljeno",instalacija:"Šta je urađeno (kabl, napajanje, baterija…)",rekonf:"Šta je podešeno"}[ra];
     h+=exHtml(op,ra==="servis"?"s":ra==="instalacija"?"i":"",ex);
@@ -1118,7 +1154,7 @@ function renderTimer(){
   $("#tmInfo").textContent=!start?"Pritisnite Start kada počnete posao.":pz?`Pauza od ${fmtT(pausedAt)}. Pritisnite Nastavi kada se vratite na posao.`:run?`Posao traje od ${fmtT(start)}${pzTxt}.`:`Početak ${fmtT(start)} · Kraj ${fmtT(stop)} · Rad ${fmtDur(Math.round(radMs()/60000))}${pzTxt} · Nalog je zatvoren.`;
   clearInterval(tmInt);if(run||pz)tmInt=setInterval(renderTimer,1000);
 }
-$("#tmStart").onclick=()=>{timer={start:Date.now(),stop:null,pauze:[],pausedAt:null,nid:null};$("#r_datum").value=new Date().toLocaleDateString("sv-SE");renderTimer();saveDraft();toast("Radno vreme je pokrenuto.")};
+$("#tmStart").onclick=()=>{timer={start:Date.now(),stop:null,pauze:[],pausedAt:null,nid:"rn"+Date.now().toString(36)};$("#r_datum").value=new Date().toLocaleDateString("sv-SE");renderTimer();saveDraft();toast("Radno vreme je pokrenuto.")};
 $("#tmPause").onclick=()=>{timer.pausedAt=Date.now();renderTimer();saveDraft();toast("Pauza. Vreme rada je zaustavljeno.")};
 $("#tmResume").onclick=()=>{timer.pauze=[...(timer.pauze||[]),{od:timer.pausedAt,do:Date.now()}];timer.pausedAt=null;renderTimer();saveDraft();toast("Rad je nastavljen.")};
 $("#tmStop").onclick=()=>$("#nf").requestSubmit?$("#nf").requestSubmit():$("#fSave").click();
@@ -1209,7 +1245,7 @@ $("#geoBtn").onclick=async()=>{const b=$("#geoBtn");b.disabled=true;b.textConten
 const DKEY="rn_draft";let pendingK=null,dT=null;
 function saveDraft(){if(!formOpen||editId)return;const f={};
   document.querySelectorAll("#nf input[id],#nf select[id],#nf textarea[id]").forEach(el=>{if(el.type==="file"||el.id==="k_find"||/^dx_|^iv_/.test(el.id)||el.closest("#ivList,#kalRows,#kolRows,#rezList,#dxList"))return;f[el.id]=(el.type==="checkbox"||el.type==="radio")?el.checked:el.value});
-  ls.set(DKEY,JSON.stringify({tip,f,dx:dxData(),iv:ivData(),kal:kalData(),kol:kolData(),rez:rezData(),timer,geo,t:Date.now()}))}
+  ls.set(DKEY,JSON.stringify({tip,f,dx:dxData(),iv:ivData(),kal:kalData(),kol:kolData(),rez:rezData(),timer,geo,t:Date.now()}));utSync()}
 const dSave=()=>{clearTimeout(dT);dT=setTimeout(saveDraft,400)};
 $("#nf").addEventListener("change",e=>{if(e.target.type==="radio"){const g=e.target.closest(".seg");if(g)g.classList.remove("invalid-g")}});
 $("#nf").addEventListener("input",dSave);$("#nf").addEventListener("change",dSave);$("#nf").addEventListener("click",e=>{if(e.target.closest(".xbtn"))dSave()});
@@ -1230,6 +1266,7 @@ function fillServiser(){const m=window.RN&&RN.me&&RN.me();if(!m||!m.name)return;
   if(!editId&&(!isAdmin()||!val("r_serviser")))$("#r_serviser").value=m.name;$("#r_serviser").readOnly=!isAdmin();
   if(!editId&&!val("kol_pred"))$("#kol_pred").value=m.name;$("#kol_pred").readOnly=!isAdmin();if(typeof primOpts==="function")primOpts()}
 function resetForm(t){
+  if(timer&&timer.start&&timer.nid&&!editId)utDel(timer.nid);
   geo=null;if(typeof renderGeo==="function")renderGeo();
   editId=null;editOrig=null;editSig=null;$("#sigOld").hidden=true;$("#timerSec").hidden=false;$("#editTimes").hidden=true;$("#fReset").textContent="Odbaci nalog";
   $("#nf").reset();tip=t||"ugradnja";$("#k_find").value="";renderKlSelect();renderTipFields();renderBanner();
@@ -1403,7 +1440,7 @@ async function doSave(){const msg=$("#fMsg");msg.textContent="";
       else if(!kid&&$("#k_add").checked){await db.doc("klijenti/k"+Date.now().toString(36)).set((({logoId,...o})=>({...o,adresa:o.adresa||doc.lokacija?.adresa||"",vozila:[vz]}))(doc.klijent))}
       else if(kid&&vz.reg&&S.has("voz")&&tip!=="seoba"){const k=klijenti.find(x=>x.id===kid);if(k&&!(k.vozila||[]).some(v=>v.reg===vz.reg))await db.doc("klijenti/"+kid).update({vozila:[...(k.vozila||[]),vz]})}
     }catch(e){}
-    formOpen=false;clearDraft();
+    formOpen=false;clearDraft();utDel(id);
     ls.set("rn_serviser",doc.rad.serviser);
     nalozi=[{id,...doc},...nalozi.filter(x=>x.id!==id)];
     const mailTo=doc.emailKopija;
@@ -1776,7 +1813,7 @@ $("#cSave").onclick=async()=>{if(!db)return;const d={...firma};CF.forEach(k=>d[k
   catch(e){$("#cMsg").style.color="";$("#cMsg").textContent="Čuvanje nije uspelo: "+(e.message||"nemate dozvolu")}};
 
 /* ---------- boot ---------- */
-fillLists();resetForm();restoreDraft();klFormLoad(null);route();renderArchive();renderKlList();
+fillLists();resetForm();restoreDraft();utSync();klFormLoad(null);route();renderArchive();renderKlList();
 (async()=>{
   const C=window.claude;
   if(!C||!C.use){loaded=true;klLoaded=true;renderKlList();$("#list").innerHTML=`<div class="empty">Aplikacija nije ispravno učitana. Osvežite stranicu.</div>`;renderDetail();return}
