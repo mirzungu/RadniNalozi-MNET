@@ -106,10 +106,10 @@
     if (ready) return ready;
     ready = (async () => {
       me = await loadMe();
-      if (!me) me = await loginScreen();
+      if (!me) { me = await loginScreen(); ls.del("rn_u_firmi"); }   // posle svake prijave glavni administrator prvo vidi Platformu
       ls.set("rn_me", JSON.stringify(me));
       // glavni administrator: prvo ekran „Platforma“ (izbor firme), u aplikaciju tek kad uđe u firmu
-      if (me.isSuper && (!me.firma || ls.get("rn_u_firmi") !== me.firma)) await firmeDialog(true);
+      if (me.isSuper && (!me.firma || ls.get("rn_u_firmi") !== me.id + "|" + me.firma)) await firmeDialog(true);
       userMenu();
       return me;
     })();
@@ -213,7 +213,7 @@
         b.disabled = true;
         try {
           if (b.dataset.udji !== me.firma) chk(await sb.rpc("rn_udji_u_firmu", { p_firma: b.dataset.udji }));
-          ls.set("rn_u_firmi", b.dataset.udji); ls.del("rn_me"); location.reload();
+          ls.set("rn_u_firmi", me.id + "|" + b.dataset.udji); ls.del("rn_me"); location.reload();
         }
         catch (e) { b.disabled = false; say(errMsg(e)); }
       });
