@@ -127,7 +127,7 @@
     w.className = "um";
     w.innerHTML = '<button type="button" class="um-btn" id="umBtn" aria-haspopup="true" aria-expanded="false"></button>' +
       '<div class="um-menu" id="umMenu" hidden>' + (me.isSuper ? '<button type="button" id="umFirme">Firme…</button>' : "") +
-      '<button type="button" id="umPass">Promeni lozinku</button><button type="button" id="umOut">Odjavi se</button></div>';
+      '<button type="button" id="umTema"></button><button type="button" id="umPass">Promeni lozinku</button><button type="button" id="umOut">Odjavi se</button></div>';
     if (me.isSuper) {
       const fb = document.createElement("button");
       fb.type = "button"; fb.className = "um-firma"; fb.id = "umFirma"; fb.title = "Promeni firmu";
@@ -143,6 +143,17 @@
     document.addEventListener("click", (e) => { if (!w.contains(e.target)) menu.hidden = true; });
     w.querySelector("#umOut").onclick = logout;
     w.querySelector("#umPass").onclick = () => { menu.hidden = true; passwordDialog(); };
+    // tema: automatski (kao telefon) → svetla → tamna
+    const TEME = [["", "Tema: automatski"], ["light", "Tema: svetla"], ["dark", "Tema: tamna"]];
+    const temaBtn = w.querySelector("#umTema");
+    const temaShow = () => { const t = ls.get("rn_tema") || ""; temaBtn.textContent = (TEME.find((x) => x[0] === t) || TEME[0])[1]; };
+    temaBtn.onclick = () => {
+      const t = ls.get("rn_tema") || "", next = TEME[(TEME.findIndex((x) => x[0] === t) + 1) % TEME.length][0];
+      if (next) { ls.set("rn_tema", next); document.documentElement.setAttribute("data-theme", next); }
+      else { ls.del("rn_tema"); document.documentElement.removeAttribute("data-theme"); }
+      temaShow();
+    };
+    temaShow();
   }
 
   // ---------- glavni administrator: firme ----------
